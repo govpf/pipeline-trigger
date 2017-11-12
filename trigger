@@ -72,7 +72,7 @@ echo Pipeline id: $ID
 
 echo "Waiting for pipeline to finish ..."
 
-until [[ $( pstatus $ID ) != 'pending' && $( pstatus $ID ) != 'running' ]]
+until [[ $( pstatus $ID ) = 'failed' || $( pstatus $ID ) ]]
 do
     echo -n '.'
     sleep 1
