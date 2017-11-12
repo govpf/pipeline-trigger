@@ -72,8 +72,15 @@ echo Pipeline id: $ID
 
 echo "Waiting for pipeline to finish ..."
 
-until [[ $( pstatus $ID ) = 'failed' || $( pstatus $ID ) ]]
-do
+until [[ \
+  $( pstatus $ID ) = 'failed' \
+  || $( pstatus $ID ) = 'warning' \
+  || $( pstatus $ID ) = 'manual' \
+  || $( pstatus $ID ) = 'cancelled' \
+  || $( pstatus $ID ) = 'canceled' \  # docs indicate this spelling might exist
+  || $( pstatus $ID ) = 'success' \
+  || $( pstatus $ID ) = 'skipped' \
+]]; do
     echo -n '.'
     sleep 1
 done
