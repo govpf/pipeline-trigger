@@ -62,8 +62,6 @@ function pstatus {
     curl -s -X GET -H "PRIVATE-TOKEN: $PRIVATE_TOKEN" ${PROJ_URL}/pipelines/$PIPELINE | jq -r '.status'
 }
 
-# pipeline states: running, pending, success, failed, canceled, skipped
-
 echo "Triggering pipeline ..."
 
 ID=$(curl -s -X POST -F token=$PIPELINE_TOKEN -F "ref=$TARGET_BRANCH" ${PROJ_URL}/trigger/pipeline | jq -r '.id')
@@ -72,15 +70,16 @@ echo Pipeline id: $ID
 
 echo "Waiting for pipeline to finish ..."
 
-until [[ \
-  $( pstatus $ID ) = 'failed' \
-  || $( pstatus $ID ) = 'warning' \
-  || $( pstatus $ID ) = 'manual' \
-  || $( pstatus $ID ) = 'cancelled' \
-  || $( pstatus $ID ) = 'canceled' \  # docs indicate this spelling might exist
-  || $( pstatus $ID ) = 'success' \
-  || $( pstatus $ID ) = 'skipped' \
-]]; do
+until [[
+    # see https://docs.gitlab.com/ee/ci/pipelines.html for states
+    $( pstatus $ID ) = 'failed' \
+    || $( pstatus $ID ) = 'warning' \
+    || $( pstatus $ID ) = 'manual' \
+    || $( pstatus $ID ) = 'canceled' \
+    || $( pstatus $ID ) = 'success' \
+    || $( pstatus $ID ) = 'skipped'
+]]
+do
     echo -n '.'
     sleep 1
 done
