@@ -2,7 +2,7 @@
 set -e
 
 # vars
-# PRIVATE_TOKEN
+# API_TOKEN
 # PIPELINE_TOKEN
 # TARGET_BRANCH
 # PROJECT_ID
@@ -59,7 +59,7 @@ PROJ_URL=https://gitlab.com/api/v4/projects/${PROJECT_ID}
 
 function pstatus {
     PIPELINE=$1
-    curl -s -X GET -H "PRIVATE-TOKEN: $PRIVATE_TOKEN" ${PROJ_URL}/pipelines/$PIPELINE | jq -r '.status'
+    curl -s -X GET -H "PRIVATE-TOKEN: $API_TOKEN" ${PROJ_URL}/pipelines/$PIPELINE | jq -r '.status'
 }
 
 echo "Triggering pipeline ..."
