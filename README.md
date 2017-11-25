@@ -1,3 +1,9 @@
+# Pipeline-trigger
+
+Pipeline-trigger allows you to trigger and wait for the results of another GitLab pipeline.
+
+## Background
+
 GitLab's pipelines are a great tool to set up a CI process within projects. There's a relatively straight-forward way of triggering another project's pipeline from a parent project.
 
 However, this process is a fire-and-forget one: you will trigger the project with an HTTP request to the other project but this call will return upon registering the trigger on the other end and not wait for that pipeline to finish, let alone tell you how it went.
@@ -9,6 +15,8 @@ For instance, imagine you want to set up the following pipeline with a parent pr
 This is impossible to configure out of the box with GitLab.
 
 However, thanks to the GitLab API and docker, it's actually quite simple to set up a reusable docker image which can be used as a building block.
+
+## How to set it up
 
 Here's what the `.gitlab-ci.yml` looks like for the above pipeline:
 
