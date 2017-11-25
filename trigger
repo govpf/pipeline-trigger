@@ -70,8 +70,8 @@ echo Pipeline id: $ID
 
 echo "Waiting for pipeline to finish ..."
 
+# see https://docs.gitlab.com/ee/ci/pipelines.html for states
 until [[ \
-    # see https://docs.gitlab.com/ee/ci/pipelines.html for states
     $( pstatus $ID ) = 'failed' \
     || $( pstatus $ID ) = 'warning' \
     || $( pstatus $ID ) = 'manual' \
