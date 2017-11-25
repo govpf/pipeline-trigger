@@ -7,7 +7,9 @@ set -e
 # TARGET_BRANCH
 # PROJECT_ID
 
-usage() { echo "Usage: $0 -a <api token> -p <pipeline token> <project id>" 1>&2; exit 1; }
+TARGET_BRANCH="master"
+
+usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-t <target branch (default: master)>] <project id>" 1>&2; exit 1; }
 
 while getopts ":a:p:t:" o; do
     case "${o}" in
@@ -81,7 +83,7 @@ until [[ \
 ]]
 do
     echo -n '.'
-    sleep 1
+    sleep 5
 done
 
 echo
