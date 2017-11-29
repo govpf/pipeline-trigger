@@ -58,8 +58,8 @@ build:
     IMAGE: $SHA_IMAGE
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker build --pull -t "$IMAGE" .
-    - docker push "$IMAGE"
+    - docker build --pull -t $IMAGE .
+    - docker push $IMAGE
   except:
     - master
 
