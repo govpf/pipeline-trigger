@@ -26,8 +26,18 @@ stages:
     - docker build --pull -t $SHA_IMAGE .
     - docker push $SHA_IMAGE
 
-build:
+build-sha:
   <<: *build_template
+
+build-latest:
+  variables:
+    IMAGE: $CI_REGISTRY_IMAGE
+  <<: *build_template
+    - docker tag "$SHA_IMAGE" "$IMAGE"
+    - docker push "$SHA_IMAGE"
+  except:
+    - master
+
 
 build-master:
   stage: build
