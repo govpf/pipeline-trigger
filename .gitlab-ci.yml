@@ -22,7 +22,7 @@ build-master:
   services:
     - docker:dind
   variables:
-    - IMAGE: $CI_REGISTRY_IMAGE
+    - IMAGE: "$CI_REGISTRY_IMAGE"
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build --pull -t "$IMAGE" .
