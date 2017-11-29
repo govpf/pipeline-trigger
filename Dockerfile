@@ -5,5 +5,5 @@ RUN apk add --no-cache \
     jq \
     && rm -rf /var/cache/apk/*
 
-COPY trigger /
-CMD [ "/trigger" ]
+COPY trigger /usr/bin
+CMD [ "trigger" ]
