@@ -1,5 +1,5 @@
 variables:
-  SHA_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   # set via secret variables
   API_TOKEN: $PERSONAL_ACCESS_TOKEN
   PROJ_A_ID: $PROJ_A_ID
@@ -21,54 +21,34 @@ stages:
   image: docker:latest
   services:
     - docker:dind
+
+
+.image_build: &image_build
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker build --pull -t $SHA_IMAGE .
-    - docker push $SHA_IMAGE
+    - docker build --pull -t $IMAGE .
+    - docker push $IMAGE
+
 
 build-sha:
   <<: *build_template
+  <<: *image_build
+
 
 build-latest:
-  variables:
-    IMAGE: $CI_REGISTRY_IMAGE
   <<: *build_template
-    - docker tag "$SHA_IMAGE" "$IMAGE"
-    - docker push "$SHA_IMAGE"
-  except:
-    - master
-
-
-build-master:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
+  <<: *image_build
   variables:
-    IMAGE: $CI_REGISTRY_IMAGE
-  script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker build --pull -t "$IMAGE" .
-    - docker push "$IMAGE"
-    - docker tag "$IMAGE" "$SHA_IMAGE"
-    - docker push "$SHA_IMAGE"
+    IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
   only:
     - master
 
 
-build-master-tag:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
+build-tag:
+  <<: *build_template
+  <<: *image_build
   variables:
     IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
-  script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker build --pull -t "$IMAGE" .
-    - docker push "$IMAGE"
-    - docker tag "$IMAGE" "$SHA_IMAGE"
-    - docker push "$SHA_IMAGE"
   only:
     - master
     - tags
