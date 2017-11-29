@@ -22,7 +22,7 @@ build-master:
   services:
     - docker:dind
   variables:
-    - IMAGE: "$CI_REGISTRY_IMAGE"
+    IMAGE: "$CI_REGISTRY_IMAGE"
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build --pull -t "$IMAGE" .
@@ -38,7 +38,7 @@ build-master-tag:
   services:
     - docker:dind
   variables:
-    - IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+    IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build --pull -t "$IMAGE" .
@@ -55,7 +55,7 @@ build:
   services:
     - docker:dind
   variables:
-    - IMAGE: "$SHA_IMAGE"
+    IMAGE: "$SHA_IMAGE"
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build --pull -t "$IMAGE" .
