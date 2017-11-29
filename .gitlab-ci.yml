@@ -59,17 +59,20 @@ deploy dev:
   script:
     - echo "deploying to dev"
 
+
 test proj a:
   stage: test_dev
   image: $SHA_IMAGE
   script: 
     - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
 
+
 test proj b:
   stage: test_dev
   image: $SHA_IMAGE
   script: 
     - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_B_ID
+
 
 deploy_qa:
   stage: deploy_qa
