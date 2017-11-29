@@ -16,7 +16,7 @@ stages:
   - deploy_qa
 
 
-build:
+.build_template: &build_template
   stage: build
   image: docker:latest
   services:
@@ -24,8 +24,10 @@ build:
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build --pull -t $SHA_IMAGE .
-    # - docker push $SHA_IMAGE
+    - docker push $SHA_IMAGE
 
+build:
+  <<: *build_template
 
 build-master:
   stage: build
