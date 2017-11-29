@@ -57,6 +57,8 @@ build:
   variables:
     IMAGE: $SHA_IMAGE
   script:
+    - echo sha image $SHA_IMAGE
+    - echo image $IMAGE
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
