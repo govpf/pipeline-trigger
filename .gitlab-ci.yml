@@ -16,6 +16,17 @@ stages:
   - deploy_qa
 
 
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build --pull -t $SHA_IMAGE .
+    # - docker push $SHA_IMAGE
+
+
 build-master:
   stage: build
   image: docker:latest
@@ -31,6 +42,7 @@ build-master:
     - docker push "$SHA_IMAGE"
   only:
     - master
+
 
 build-master-tag:
   stage: build
@@ -49,18 +61,6 @@ build-master-tag:
     - master
     - tags
 
-build:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker build --pull -t $SHA_IMAGE .
-    - docker push $SHA_IMAGE
-  except:
-    - master
-
 
 deploy dev:
   stage: deploy_dev
@@ -69,13 +69,13 @@ deploy dev:
 
 test proj a:
   stage: test_dev
-  image: $CI_REGISTRY_IMAGE
+  image: $SHA_IMAGE
   script: 
     - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
 
 test proj b:
   stage: test_dev
-  image: $CI_REGISTRY_IMAGE
+  image: $SHA_IMAGE
   script: 
     - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_B_ID
 
