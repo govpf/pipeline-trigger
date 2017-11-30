@@ -14,6 +14,7 @@ stages:
   - deploy_dev
   - test_dev
   - deploy_qa
+  - release
 
 
 .build_template: &build_template
@@ -33,24 +34,6 @@ stages:
 build-sha:
   <<: *build_template
   <<: *image_build
-
-
-build-latest:
-  variables:
-    IMAGE: $CI_REGISTRY_IMAGE:latest
-  <<: *build_template
-  <<: *image_build
-  only:
-    - master
-
-
-build-tag:
-  variables:
-    IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
-  <<: *build_template
-  <<: *image_build
-  only:
-    - tags
 
 
 deploy dev:
@@ -77,3 +60,35 @@ deploy_qa:
   stage: deploy_qa
   script:
     - echo "deploying to qa"
+
+
+.release_template: &release_template
+  stage: release
+  image: docker:latest
+  services:
+    - docker:dind
+
+
+.image_release: &image_release
+  script:
+    - docker pull $IMAGE
+    - docker tag $IMAGE $RELEASE_IMAGE
+    - docker push $RELEASE_IMAGE
+
+
+release-latest:
+  only:
+    - master
+  variables:
+    RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  <<: *release_template
+  <<: *image_release
+
+
+release-tag:
+  only:
+    - tags
+  variables:
+    RELEASE_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+  <<: *release_template
+  <<: *image_release
