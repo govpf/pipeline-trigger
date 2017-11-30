@@ -15,23 +15,15 @@ stages:
   - release
 
 
-.build_template: &build_template
+build-sha:
   stage: build
   image: docker:latest
   services:
     - docker:dind
-
-
-.image_build: &image_build
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
-
-
-build-sha:
-  <<: *build_template
-  <<: *image_build
 
 
 test proj a:

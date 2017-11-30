@@ -1,3 +1,5 @@
+![pipeline-status](https://gitlab.com/finestructure/pipeline-trigger/badges/master/build.svg)
+
 # Pipeline-trigger
 
 Pipeline-trigger allows you to trigger and wait for the results of another GitLab pipeline.
@@ -10,7 +12,7 @@ However, this process is a fire-and-forget one: you will trigger the project wit
 
 For instance, imagine you want to set up the following pipeline with a parent project triggering builds in other projects - A and B - and waiting for their results:
 
-![Screen_Shot_2017-11-25_at_10.37.00](/uploads/2fef9bc62bda643f32129e55b128bfe4/Screen_Shot_2017-11-25_at_10.37.00.png)
+![Screen_Shot_2017-11-30_at_08.21.42](/uploads/c906618303dcf0124185b97f56d3fe97/Screen_Shot_2017-11-30_at_08.21.42.png)
 
 This is impossible to configure out of the box with GitLab.
 
@@ -18,48 +20,41 @@ However, thanks to the GitLab API and docker, it's actually quite simple to set 
 
 ## How to set it up
 
-Here's what the `.gitlab-ci.yml` looks like for the above pipeline:
+Here's what the `.gitlab-ci.yml` looks like for the above pipeline (straight from this project's [gitlab-ci.yml](/.gitlab-ci.yml)):
 
 ```
-image: busybox:latest
-
 variables:
-  # PERSONAL_ACCESS_TOKEN set via secret variables
+  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  # set via secret variables
   API_TOKEN: $PERSONAL_ACCESS_TOKEN
-  PTRIGGER: "registry.gitlab.com/finestructure/pipeline-trigger"
-  PROJ_A_ID: 4624510
-  PROJ_A_PIPELINE_TOKEN: "bf2c2803db650b8cc473dd1c790c97"
-  PROJ_B_ID: 4624517
-  PROJ_B_PIPELINE_TOKEN: "56f4e2d904958e064c7436d932f490"
+  PROJ_A_ID: $PROJ_A_ID
+  PROJ_A_PIPELINE_TOKEN: $PROJ_A_PIPELINE_TOKEN
+  PROJ_B_ID: $PROJ_B_ID
+  PROJ_B_PIPELINE_TOKEN: $PROJ_B_PIPELINE_TOKEN
   TARGET_BRANCH: master
 
 stages:
-  - deploy_dev
-  - test_dev
-  - deploy_qa
+  - build
+  - test
+  - release
 
-deploy dev:
-  stage: deploy_dev
-  script:
-    - echo "deploying to dev"
+build-sha:
+  # details skipped
 
 test proj a:
-  stage: test_dev
-  image: $PTRIGGER
+  stage: test
+  image: $IMAGE
   script: 
-    - /trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
+    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
 
 test proj b:
-  stage: test_dev
-  image: $PTRIGGER
+  stage: test
+  image: $IMAGE
   script: 
-    - /trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_B_ID
+    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_B_ID
 
-deploy_qa:
-  stage: deploy_qa
-  script:
-    - echo "deploying to qa"
-
+release-tag:
+  # details skipped
 ```
 
 Apart from configuring the typical variables needed, the essential part is to set up a trigger job for each dependency:
