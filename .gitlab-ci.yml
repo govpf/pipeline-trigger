@@ -36,22 +36,22 @@ build-sha:
 
 
 build-latest:
-  <<: *build_template
-  <<: *image_build
   variables:
     IMAGE: $CI_REGISTRY_IMAGE:latest
-  only:
-    - master
-
-
-build-tag:
   <<: *build_template
   <<: *image_build
-  variables:
-    IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
   only:
     - master
-    - tags
+
+
+# build-tag:
+#   <<: *build_template
+#   <<: *image_build
+#   variables:
+#     IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+#   only:
+#     - master
+#     - tags
 
 
 deploy dev:
