@@ -64,7 +64,7 @@ test proj a:
   stage: test_dev
   image: $PTRIGGER
   script: 
-    - /trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
+    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
 ```
 
 This runs the `trigger` command which is part of the `pipeline-trigger` image with the specified parameters. This script will trigger the pipeline in the given project and then poll the pipeline status for its result. The exit code will be `0` in case of `success` and that way integate in your parent project's pipeline like any other build job - just that it's run on another project's pipeline.
