@@ -30,7 +30,7 @@ test proj a:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
+    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
 
 
 test proj b:
