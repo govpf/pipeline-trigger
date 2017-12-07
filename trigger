@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 # vars
@@ -9,18 +9,21 @@ set -e
 
 TARGET_BRANCH="master"
 
-usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-t <target branch (default: master)>] <project id>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-t <target branch (default: master)>] <project id>" 1>&2; exit 1; }
 
-while getopts ":a:p:t:" o; do
+while getopts ":a:e:p:t:" o; do
     case "${o}" in
         a)
-            API_TOKEN=${OPTARG}
+            API_TOKEN="${OPTARG}"
+            ;;
+        e)
+            ENV+=("${OPTARG}")
             ;;
         p)
-            PIPELINE_TOKEN=${OPTARG}
+            PIPELINE_TOKEN="${OPTARG}"
             ;;
         t)
-            TARGET_BRANCH=${OPTARG}
+            TARGET_BRANCH="${OPTARG}"
             ;;
         *)
             usage
@@ -56,6 +59,16 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 
+VAR_ARGS=()
+for env in "${ENV[@]}"; do
+    IFS='=' read -r -a envs <<< "$env"
+    if [ ${#envs[@]} -ne 2 ]; then
+        echo Not a key value pair: $env
+        continue
+    fi
+    VAR_ARGS+=("variables[${envs[0]}]=${envs[1]}")
+done
+
 
 PROJ_URL=https://gitlab.com/api/v4/projects/${PROJECT_ID}
 
@@ -66,7 +79,12 @@ function pstatus {
 
 echo "Triggering pipeline ..."
 
-ID=$(curl -s -X POST -F token=$PIPELINE_TOKEN -F "ref=$TARGET_BRANCH" ${PROJ_URL}/trigger/pipeline | jq -r '.id')
+cmd=(curl -s -X POST -F token=$PIPELINE_TOKEN -F "ref=$TARGET_BRANCH")
+for var_arg in ${VAR_ARGS[@]}; do
+    cmd+=(-F "$var_arg")
+done
+cmd+=(${PROJ_URL}/trigger/pipeline)
+ID=$("${cmd[@]}" | jq -r '.id')
 
 echo Pipeline id: $ID
 

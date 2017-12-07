@@ -69,6 +69,20 @@ test proj a:
 
 This runs the `trigger` command which is part of the `pipeline-trigger` image with the specified parameters. This script will trigger the pipeline in the given project and then poll the pipeline status for its result. The exit code will be `0` in case of `success` and that way integate in your parent project's pipeline like any other build job - just that it's run on another project's pipeline.
 
+## Trigger variables
+
+GitLab pipeline triggers accept variables being passed along with the trigger command. In the `curl` version these are constructed as follows:
+
+```
+curl ... -F variables[foo]=bar ...
+```
+
+`pipeline-trigger` support this as well via the `-e` switch (`e` for environment variable):
+
+```
+trigger ... -e foo=bar
+```
+
 ## Get in touch
 
 - http://finestructure.co
