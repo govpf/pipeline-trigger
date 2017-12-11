@@ -8,6 +8,7 @@ set -e
 # PROJECT_ID
 
 TARGET_BRANCH="master"
+ENVS=()
 
 usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-t <target branch (default: master)>] <project id>" 1>&2; exit 1; }
 
@@ -17,7 +18,7 @@ while getopts ":a:e:p:t:" o; do
             API_TOKEN="${OPTARG}"
             ;;
         e)
-            ENV+=("${OPTARG}")
+            ENVS+=("${OPTARG}")
             ;;
         p)
             PIPELINE_TOKEN="${OPTARG}"
@@ -60,7 +61,7 @@ if [ -z "$PROJECT_ID" ]; then
 fi
 
 VAR_ARGS=()
-for env in "${ENV[@]}"; do
+for env in "${ENVS[@]}"; do
     IFS='=' read -r -a envs <<< "$env"
     if [ ${#envs[@]} -ne 2 ]; then
         echo Not a key value pair: $env
