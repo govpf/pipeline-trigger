@@ -83,6 +83,18 @@ curl ... -F variables[foo]=bar ...
 trigger ... -e foo=bar
 ```
 
+## Self-hosted domains
+
+If you're self-hosting gitlab on your own domain, you will need to configure the urls being used for the API calls. You can use the `-h` and `-u` flags for this as follows:
+
+```
+trigger -h gitlab.com -u /api/v4/projects ...
+```
+
+where `gitlab.com` and `/api/v4/projects` are also the default values used.
+
+Typically you will only need to override the `host` but `-u` to change the url path is there if you need it.
+
 ## Get in touch
 
 - http://finestructure.co
