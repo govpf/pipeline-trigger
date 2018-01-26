@@ -8,11 +8,13 @@ set -e
 # PROJECT_ID
 
 TARGET_BRANCH="master"
+HOST="gitlab.com"
+URL_PATH="/api/v4/projects"
 ENVS=()
 
-usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-t <target branch (default: master)>] <project id>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-h <host (default: $HOST)>] [-t <target branch (default: $TARGET_BRANCH)>] [-u <url path (default: $URL_PATH)] <project id>" 1>&2; exit 1; }
 
-while getopts ":a:e:p:t:" o; do
+while getopts ":a:e:h:p:t:u:" o; do
     case "${o}" in
         a)
             API_TOKEN="${OPTARG}"
@@ -20,11 +22,17 @@ while getopts ":a:e:p:t:" o; do
         e)
             ENVS+=("${OPTARG}")
             ;;
+        h)
+            HOST="${OPTARG}"
+            ;;
         p)
             PIPELINE_TOKEN="${OPTARG}"
             ;;
         t)
             TARGET_BRANCH="${OPTARG}"
+            ;;
+        u)
+            URL_PATH="${OPTARG}"
             ;;
         *)
             usage
@@ -71,7 +79,7 @@ for env in "${ENVS[@]}"; do
 done
 
 
-PROJ_URL=https://gitlab.com/api/v4/projects/${PROJECT_ID}
+PROJ_URL=https://${HOST}${URL_PATH}/${PROJECT_ID}
 
 function pstatus {
     PIPELINE=$1
