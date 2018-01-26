@@ -87,6 +87,13 @@ done
 cmd+=(${PROJ_URL}/trigger/pipeline)
 ID=$("${cmd[@]}" | jq -r '.id')
 
+if [ "$ID" == 'null' ]; then
+    echo "Triggering pipeline failed"
+    echo "Please verify your parameters by running the following command manually:"
+    echo "${cmd[@]}"
+    exit 1
+fi
+
 echo Pipeline id: $ID
 
 echo "Waiting for pipeline to finish ..."
