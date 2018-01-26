@@ -37,7 +37,7 @@ test proj b:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -d gitlab.com -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH -u /api/v4/projects $PROJ_B_ID
+    - trigger -a $API_TOKEN -h gitlab.com -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH -u /api/v4/projects $PROJ_B_ID
 
 
 .release_template: &release_template
