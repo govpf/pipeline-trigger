@@ -11,6 +11,7 @@ TARGET_BRANCH="master"
 HOST="gitlab.com"
 URL_PATH="/api/v4/projects"
 ENVS=()
+RESPONSE=""
 
 usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-h <host (default: $HOST)>] [-t <target branch (default: $TARGET_BRANCH)>] [-u <url path (default: $URL_PATH)] <project id>" 1>&2; exit 1; }
 
@@ -108,14 +109,15 @@ echo "Waiting for pipeline to finish ..."
 
 # see https://docs.gitlab.com/ee/ci/pipelines.html for states
 until [[ \
-    $( pstatus $ID ) = 'failed' \
-    || $( pstatus $ID ) = 'warning' \
-    || $( pstatus $ID ) = 'manual' \
-    || $( pstatus $ID ) = 'canceled' \
-    || $( pstatus $ID ) = 'success' \
-    || $( pstatus $ID ) = 'skipped' \
+    $RESPONSE = 'failed' \
+    || $RESPONSE = 'warning' \
+    || $RESPONSE = 'manual' \
+    || $RESPONSE = 'canceled' \
+    || $RESPONSE = 'success' \
+    || $RESPONSE = 'skipped' \
 ]]
 do
+    RESPONSE=$( pstatus $ID )
     echo -n '.'
     sleep 5
 done
