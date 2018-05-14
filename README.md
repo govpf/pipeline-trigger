@@ -97,5 +97,5 @@ Typically you will only need to override the `host` but `-u` to change the url p
 
 ## Get in touch
 
-- http://finestructure.co
+- https://finestructure.co
 - https://twitter.com/_sa_s
