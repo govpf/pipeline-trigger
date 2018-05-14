@@ -1,4 +1,5 @@
-![pipeline-status](https://gitlab.com/finestructure/pipeline-trigger/badges/master/build.svg)
+[![pipeline-status](https://gitlab.com/finestructure/pipeline-trigger/badges/master/build.svg)](https://gitlab.com/finestructure/pipeline-trigger/pipelines)
+[![Twitter](https://img.shields.io/badge/twitter-@_sa_s-blue.svg?logo=twitter)](https://twitter.com/_sa_s)
 
 # Pipeline-trigger
 
