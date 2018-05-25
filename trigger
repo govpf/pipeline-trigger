@@ -111,6 +111,8 @@ echo Pipeline id: $ID
 
 echo "Waiting for pipeline to finish ..."
 
+RETRIES=5
+
 # see https://docs.gitlab.com/ee/ci/pipelines.html for states
 until [[ \
     $RESPONSE = 'failed' \
@@ -122,6 +124,20 @@ until [[ \
 ]]
 do
     RESPONSE=$( pstatus $ID )
+
+    if [[ -z "$RES" || "$RES" == 'null' ]]; then
+        # pstatus failed - maybe a 4xx or a gitlab hiccup (5xx)
+        # decrement retries
+        let RETRIES=RETRIES-1
+        if [ $RETRIES -eq 0 ]; then
+            # and abort if we failed too often
+            echo "Polling failed too many times. Please verify the pipeline url:"
+            echo "    ${PROJ_URL}/pipelines/$PIPELINE"
+            echo "check your api token, or check if there are connection issues."
+            RESPONSE='failed'
+        fi
+    fi
+
     echo -n '.'
     sleep $SLEEP
 done
