@@ -112,7 +112,7 @@ echo Pipeline id: $ID
 echo "Waiting for pipeline to finish ..."
 
 MAX_RETRIES=5
-RETRIES=$MAX_RETRIES
+RETRIES_LEFT=$MAX_RETRIES
 
 # see https://docs.gitlab.com/ee/ci/pipelines.html for states
 until [[ \
@@ -128,17 +128,16 @@ do
 
     if [[ -z "$RES" || "$RES" == 'null' ]]; then
         # pstatus failed - maybe a 4xx or a gitlab hiccup (5xx)
-        # decrement retries
-        RETRIES=$((RETRIES-1))
-        if [ $RETRIES -eq 0 ]; then
+        RETRIES_LEFT=$((RETRIES_LEFT-1))
+        if [ $RETRIES_LEFT -eq 0 ]; then
             echo "Polling failed $MAX_RETRIES consecutive times. Please verify the pipeline url:"
             echo "    ${PROJ_URL}/pipelines/$PIPELINE"
             echo "check your api token, or check if there are connection issues."
             RESPONSE='failed'
         fi
     else
-        # reset retries if the status call succeeded (fail only on consecutive failures)
-        RETRIES=$MAX_RETRIES
+        # reset RETRIES_LEFT if the status call succeeded (fail only on consecutive failures)
+        RETRIES_LEFT=$MAX_RETRIES
     fi
 
     echo -n '.'
