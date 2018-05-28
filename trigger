@@ -85,11 +85,15 @@ done
 
 
 PROJ_URL=https://${HOST}${URL_PATH}/${PROJECT_ID}
-PSTATUS_CMD='curl -s -X GET -H "PRIVATE-TOKEN: '"$API_TOKEN"'" '"$PROJ_URL"'/pipelines'
+
+function curl_pipeline {
+    pipeline_id="$1"
+    curl -s -X GET -H "PRIVATE-TOKEN: $API_TOKEN" "$PROJ_URL/pipelines/$pipeline_id"
+}
 
 function pstatus {
     pipeline_id="$1"
-    "$PSTATUS_CMD/$pipeline_id" | jq -r '.status'
+    curl_pipeline "$pipeline_id" | jq -r '.status'
 }
 
 echo "Triggering pipeline ..."
@@ -132,11 +136,11 @@ do
         RETRIES_LEFT=$((RETRIES_LEFT-1))
         if [ $RETRIES_LEFT -eq 0 ]; then
             echo "Polling failed $MAX_RETRIES consecutive times. Please verify the pipeline url:"
-            echo "    $PSTATUS_CMD/$PIPELINE_ID"
+            echo "   curl -s -X GET -H \"PRIVATE-TOKEN: $API_TOKEN\" $PROJ_URL/pipelines/$pipeline_id"
             echo "check your api token, or check if there are connection issues."
             echo
             echo "Latest result:"
-            echo $( "$PSTATUS_CMD/$PIPELINE_ID" )
+            echo $( curl_pipeline "$PIPELINE_ID" )
             echo
         fi
     else
