@@ -85,7 +85,7 @@ done
 
 
 PROJ_URL=https://${HOST}${URL_PATH}/${PROJECT_ID}
-PSTATUS_CMD="curl -s -X GET -H "PRIVATE-TOKEN: $API_TOKEN" ${PROJ_URL}/pipelines"
+PSTATUS_CMD='curl -s -X GET -H "PRIVATE-TOKEN: '"$API_TOKEN"'" '"$PROJ_URL"'/pipelines'
 
 function pstatus {
     pipeline_id="$1"
