@@ -75,13 +75,13 @@ fi
 
 
 VAR_ARGS=()
-for env in "$ENVS[@]"; do
+for env in "${ENVS[@]}"; do
     IFS='=' read -r -a envs <<< "$env"
     if [ ${#envs[@]} -ne 2 ]; then
         echo Not a key value pair: $env
         continue
     fi
-    VAR_ARGS+=("variables[$envs[0]]=$envs[1]")
+    VAR_ARGS+=("variables[${envs[0]}]=${envs[1]}")
 done
 
 
@@ -103,16 +103,16 @@ function pstatus {
 echo "Triggering pipeline ..."
 
 cmd=(curl -s -X POST -F token=$PIPELINE_TOKEN -F "ref=$TARGET_BRANCH")
-for var_arg in $VAR_ARGS[@]; do
+for var_arg in ${VAR_ARGS[@]}; do
     cmd+=(-F "$var_arg")
 done
 cmd+=("$PROJ_URL/trigger/pipeline")
-PIPELINE_ID=$( "$cmd[@]" | jq -r '.id' )
+PIPELINE_ID=$( "${cmd[@]}" | jq -r '.id' )
 
 if [ "$PIPELINE_ID" == 'null' ]; then
     echo "Triggering pipeline failed"
     echo "Please verify your parameters by running the following command manually:"
-    echo "$cmd[@]"
+    echo "${cmd[@]}"
     exit 1
 fi
 
