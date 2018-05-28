@@ -46,6 +46,8 @@ while getopts ":a:e:h:p:t:u:s:" o; do
 done
 shift $((OPTIND-1))
 
+set -u
+
 PROJECT_ID="$@"
 
 
@@ -131,7 +133,7 @@ until [[ \
 do
     RESPONSE=$( pstatus $PIPELINE_ID )
 
-    if [[ -z "$RES" || "$RES" == 'null' ]]; then
+    if [[ -z "$RESPONSE" || "$RESPONSE" == 'null' ]]; then
         # pstatus failed - maybe a 4xx or a gitlab hiccup (5xx)
         RETRIES_LEFT=$((RETRIES_LEFT-1))
         if [ $RETRIES_LEFT -eq 0 ]; then
