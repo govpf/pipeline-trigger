@@ -85,11 +85,11 @@ done
 
 
 PROJ_URL=https://${HOST}${URL_PATH}/${PROJECT_ID}
-PSTATUS_CMD="curl -s -X GET -H "PRIVATE-TOKEN: $API_TOKEN" ${PROJ_URL}/pipelines/$PIPELINE"
+PSTATUS_CMD="curl -s -X GET -H "PRIVATE-TOKEN: $API_TOKEN" ${PROJ_URL}/pipelines"
 
 function pstatus {
-    PIPELINE=$1
-    $PSTATUS_CMD | jq -r '.status'
+    pipeline_id="$1"
+    "$PSTATUS_CMD/$pipeline_id" | jq -r '.status'
 }
 
 echo "Triggering pipeline ..."
@@ -99,16 +99,16 @@ for var_arg in ${VAR_ARGS[@]}; do
     cmd+=(-F "$var_arg")
 done
 cmd+=(${PROJ_URL}/trigger/pipeline)
-ID=$("${cmd[@]}" | jq -r '.id')
+PIPELINE_ID=$("${cmd[@]}" | jq -r '.id')
 
-if [ "$ID" == 'null' ]; then
+if [ "$PIPELINE_ID" == 'null' ]; then
     echo "Triggering pipeline failed"
     echo "Please verify your parameters by running the following command manually:"
     echo "${cmd[@]}"
     exit 1
 fi
 
-echo Pipeline id: $ID
+echo Pipeline id: $PIPELINE_ID
 
 echo "Waiting for pipeline to finish ..."
 
@@ -125,18 +125,18 @@ until [[ \
     || $RESPONSE = 'skipped' \
 ]]
 do
-    RESPONSE=$( pstatus $ID )
+    RESPONSE=$( pstatus $PIPELINE_ID )
 
     if [[ -z "$RES" || "$RES" == 'null' ]]; then
         # pstatus failed - maybe a 4xx or a gitlab hiccup (5xx)
         RETRIES_LEFT=$((RETRIES_LEFT-1))
         if [ $RETRIES_LEFT -eq 0 ]; then
             echo "Polling failed $MAX_RETRIES consecutive times. Please verify the pipeline url:"
-            echo "    $PSTATUS_CMD"
+            echo "    $PSTATUS_CMD/$PIPELINE_ID"
             echo "check your api token, or check if there are connection issues."
             echo
             echo "Latest result:"
-            echo $( "$PSTATUS_CMD" )
+            echo $( "$PSTATUS_CMD/$PIPELINE_ID" )
             echo
         fi
     else
@@ -151,4 +151,4 @@ done
 echo
 echo Done
 
-[ $( pstatus $ID ) = 'success' ]
+[ $( pstatus $PIPELINE_ID ) = 'success' ]
