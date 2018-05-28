@@ -46,8 +46,6 @@ while getopts ":a:e:h:p:t:u:s:" o; do
 done
 shift $((OPTIND-1))
 
-set -u
-
 PROJECT_ID="$@"
 
 
@@ -74,6 +72,8 @@ if [ -z "$PROJECT_ID" ]; then
     usage
     exit 1
 fi
+
+set -u
 
 VAR_ARGS=()
 for env in "${ENVS[@]}"; do
