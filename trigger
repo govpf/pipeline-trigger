@@ -17,27 +17,27 @@ SLEEP=5
 usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-h <host (default: $HOST)>] [-t <target branch (default: $TARGET_BRANCH)>] [-u <url path (default: $URL_PATH)] [-s <sleep seconds (default: $SLEEP)>] <project id>" 1>&2; exit 1; }
 
 while getopts ":a:e:h:p:t:u:s:" o; do
-    case "${o}" in
+    case "$o" in
         a)
-            API_TOKEN="${OPTARG}"
+            API_TOKEN="$OPTARG"
             ;;
         e)
-            ENVS+=("${OPTARG}")
+            ENVS+=("$OPTARG")
             ;;
         h)
-            HOST="${OPTARG}"
+            HOST="$OPTARG"
             ;;
         p)
-            PIPELINE_TOKEN="${OPTARG}"
+            PIPELINE_TOKEN="$OPTARG"
             ;;
         t)
-            TARGET_BRANCH="${OPTARG}"
+            TARGET_BRANCH="$OPTARG"
             ;;
         u)
-            URL_PATH="${OPTARG}"
+            URL_PATH="$OPTARG"
             ;;
         s)
-            SLEEP="${OPTARG}"
+            SLEEP="$OPTARG"
             ;;
         *)
             usage
@@ -73,20 +73,22 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 
-set -u
 
 VAR_ARGS=()
-for env in "${ENVS[@]}"; do
+for env in "$ENVS[@]"; do
     IFS='=' read -r -a envs <<< "$env"
     if [ ${#envs[@]} -ne 2 ]; then
         echo Not a key value pair: $env
         continue
     fi
-    VAR_ARGS+=("variables[${envs[0]}]=${envs[1]}")
+    VAR_ARGS+=("variables[$envs[0]]=$envs[1]")
 done
 
 
-PROJ_URL=https://${HOST}${URL_PATH}/${PROJECT_ID}
+set -u
+
+
+PROJ_URL="https://$HOST$URL_PATH/$PROJECT_ID"
 
 function curl_pipeline {
     pipeline_id="$1"
@@ -101,16 +103,16 @@ function pstatus {
 echo "Triggering pipeline ..."
 
 cmd=(curl -s -X POST -F token=$PIPELINE_TOKEN -F "ref=$TARGET_BRANCH")
-for var_arg in ${VAR_ARGS[@]}; do
+for var_arg in $VAR_ARGS[@]; do
     cmd+=(-F "$var_arg")
 done
-cmd+=(${PROJ_URL}/trigger/pipeline)
-PIPELINE_ID=$("${cmd[@]}" | jq -r '.id')
+cmd+=("$PROJ_URL/trigger/pipeline")
+PIPELINE_ID=$( "$cmd[@]" | jq -r '.id' )
 
 if [ "$PIPELINE_ID" == 'null' ]; then
     echo "Triggering pipeline failed"
     echo "Please verify your parameters by running the following command manually:"
-    echo "${cmd[@]}"
+    echo "$cmd[@]"
     exit 1
 fi
 
