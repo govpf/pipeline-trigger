@@ -88,7 +88,9 @@ PROJ_URL=https://${HOST}${URL_PATH}/${PROJECT_ID}
 
 function pstatus {
     PIPELINE=$1
-    curl -s -X GET -H "PRIVATE-TOKEN: $API_TOKEN" ${PROJ_URL}/pipelines/$PIPELINE | jq -r '.status'
+    res=$(curl -s -X GET -H "PRIVATE-TOKEN: $API_TOKEN" ${PROJ_URL}/pipelines/$PIPELINE)
+    echo "response: $res"
+    echo "$res" | jq -r '.status'
 }
 
 echo "Triggering pipeline ..."
