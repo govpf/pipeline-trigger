@@ -74,8 +74,11 @@ if [ -z "$PROJECT_ID" ]; then
 fi
 
 
+set -u
+
+
 VAR_ARGS=()
-for env in "${ENVS[@]}"; do
+for env in ${ENVS[@]+"${ENVS[@]}"}; do
     IFS='=' read -r -a envs <<< "$env"
     if [ ${#envs[@]} -ne 2 ]; then
         echo Not a key value pair: $env
@@ -83,9 +86,6 @@ for env in "${ENVS[@]}"; do
     fi
     VAR_ARGS+=("variables[${envs[0]}]=${envs[1]}")
 done
-
-
-set -u
 
 
 PROJ_URL="https://$HOST$URL_PATH/$PROJECT_ID"
@@ -103,7 +103,7 @@ function pstatus {
 echo "Triggering pipeline ..."
 
 cmd=(curl -s -X POST -F token=$PIPELINE_TOKEN -F "ref=$TARGET_BRANCH")
-for var_arg in ${VAR_ARGS[@]}; do
+for var_arg in ${VAR_ARGS[@]+"${VAR_ARGS[@]}"}; do
     cmd+=(-F "$var_arg")
 done
 cmd+=("$PROJ_URL/trigger/pipeline")
