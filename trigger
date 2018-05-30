@@ -13,8 +13,9 @@ URL_PATH="/api/v4/projects"
 ENVS=()
 RESPONSE=""
 SLEEP=5
+DETACH=0
 
-usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-h <host (default: $HOST)>] [-t <target branch (default: $TARGET_BRANCH)>] [-u <url path (default: $URL_PATH)] [-s <sleep seconds (default: $SLEEP)>] <project id>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-h <host (default: $HOST)>] [-t <target branch (default: $TARGET_BRANCH)>] [-u <url path (default: $URL_PATH)] [-s <sleep seconds (default: $SLEEP)>] [-d] <project id>" 1>&2; exit 1; }
 
 while getopts ":a:e:h:p:t:u:s:" o; do
     case "$o" in
@@ -38,6 +39,9 @@ while getopts ":a:e:h:p:t:u:s:" o; do
             ;;
         s)
             SLEEP="$OPTARG"
+            ;;
+        d)
+            DETACH=1
             ;;
         *)
             usage
@@ -117,6 +121,12 @@ if [ "$PIPELINE_ID" == 'null' ]; then
 fi
 
 echo Pipeline id: $PIPELINE_ID
+
+if [ "$DETACH" == "1" ]
+then
+    echo "Leaving pipeline to continue alone.."
+    exit 0
+fi
 
 echo "Waiting for pipeline to finish ..."
 

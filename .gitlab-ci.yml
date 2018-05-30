@@ -40,6 +40,13 @@ test proj b:
     - trigger -a $API_TOKEN -h gitlab.com -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH -u /api/v4/projects $PROJ_B_ID
 
 
+test proj a detach:
+  stage: test
+  image: $IMAGE
+  script:
+    - trigger -d -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
+
+
 .release_template: &release_template
   stage: release
   image: docker:latest
