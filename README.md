@@ -9,7 +9,7 @@ Pipeline-trigger allows you to trigger and wait for the results of another GitLa
 
 GitLab's pipelines are a great tool to set up a CI process within projects. There's a relatively straight-forward way of triggering another project's pipeline from a parent project.
 
-However, this process is a fire-and-forget one: you will trigger the project with an HTTP request to the other project but this call will return upon registering the trigger on the other end and not wait for that pipeline to finish, let alone tell you how it went.
+However, this process is "fire and forget": you will trigger the project with an HTTP request but this call will return upon registering the trigger on the other end and not wait for that pipeline to finish, let alone tell you how it went.
 
 For instance, imagine you want to set up the following pipeline with a parent project triggering builds in other projects - A and B - and waiting for their results:
 
