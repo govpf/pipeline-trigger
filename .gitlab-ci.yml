@@ -44,7 +44,7 @@ test proj a detach:
   stage: test
   image: $IMAGE
   script:
-    - trigger -d -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
+    - trigger -d -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
 
 
 .release_template: &release_template
