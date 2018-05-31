@@ -15,7 +15,24 @@ RESPONSE=""
 SLEEP=5
 DETACH=0
 
-usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-h <host (default: $HOST)>] [-t <target branch (default: $TARGET_BRANCH)>] [-u <url path (default: $URL_PATH)] [-s <sleep seconds (default: $SLEEP)>] [-d] <project id>" 1>&2; exit 1; }
+usage() {
+    echo "Usage: $0"
+    echo "       [-a <api token>]"
+    echo "       -p <pipeline token>"
+    echo "       [-d]"
+    echo "       [-e key=value]"
+    echo "       [-h <host (default: $HOST)>]"
+    echo "       [-t <target branch (default: $TARGET_BRANCH)>]"
+    echo "       [-u <url path (default: $URL_PATH)]"
+    echo "       [-s <sleep seconds (default: $SLEEP)>]"
+    echo "       <project id>" 1>&2
+    echo "In normal operation the trigger command will monitor the remote pipeline"
+    echo "for its status, waiting for success. In detached mode (-d) the remote"
+    echo "pipeline will be triggered and the command will exit straight away."
+    echo "The api token is required to fetch the status of the tiggered pipeline."
+    echo "In detached mode (-d) it is therefore optional."
+    exit 1
+}
 
 while getopts ":a:de:h:p:t:u:s:" o; do
     case "$o" in
@@ -124,7 +141,7 @@ echo Pipeline id: $PIPELINE_ID
 
 if [ "$DETACH" == "1" ]
 then
-    echo "Leaving pipeline to continue alone.."
+    echo "Leaving pipeline to continue alone ..."
     exit 0
 fi
 
