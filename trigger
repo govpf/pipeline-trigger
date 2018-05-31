@@ -17,7 +17,7 @@ DETACH=0
 
 usage() { echo "Usage: $0 -a <api token> -p <pipeline token> [-e key=value] [-h <host (default: $HOST)>] [-t <target branch (default: $TARGET_BRANCH)>] [-u <url path (default: $URL_PATH)] [-s <sleep seconds (default: $SLEEP)>] [-d] <project id>" 1>&2; exit 1; }
 
-while getopts ":a:e:h:p:t:u:s:" o; do
+while getopts ":a:de:h:p:t:u:s:" o; do
     case "$o" in
         a)
             API_TOKEN="$OPTARG"
