@@ -1,2 +1,4 @@
 *.ipynb
 .python-version
+.coverage
+.pytest_cache/

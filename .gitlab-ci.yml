@@ -25,18 +25,11 @@ build-sha:
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
 
-test basic:
+test proj a:
   stage: test
   image: $IMAGE
-  script: |
-    trigger -a $API_TOKEN $PROJ_A_ID
-
-
-# test proj a:
-#   stage: test
-#   image: $IMAGE
-#   script: 
-#     - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
+  script: 
+    - trigger -a $API_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
 
 
 # test proj b:
