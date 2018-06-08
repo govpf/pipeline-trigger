@@ -7,6 +7,10 @@ import gitlab
 
 
 def trigger():
+    print('command line:')
+    print(' '.join(sys.argv))
+    print('-' * 60)
+
     parser = argparse.ArgumentParser(description='Tool to trigger and monitor a remote GitLab pipeline', add_help=False)
     parser.add_argument(
         '-a', '--api-token', help='api token to query status')
