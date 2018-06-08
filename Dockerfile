@@ -4,5 +4,4 @@ RUN pip install python-gitlab==1.4.0
 
 COPY trigger.py /usr/bin/trigger
 
-ENTRYPOINT [ "trigger" ]
-CMD [ "--help" ]
+CMD [ "trigger", "--help" ]
