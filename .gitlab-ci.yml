@@ -28,10 +28,10 @@ build-sha:
 test basic:
   stage: test
   image: $IMAGE
-  script:
-    - echo "PROJ_A_PIPELINE_TOKEN: $PROJ_A_PIPELINE_TOKEN"
-    - echo "PROJ_A_ID: $PROJ_A_ID"
-    - trigger -p $PROJ_A_PIPELINE_TOKEN $PROJ_A_ID
+  script: |
+    echo "PROJ_A_PIPELINE_TOKEN: $PROJ_A_PIPELINE_TOKEN"
+    echo "PROJ_A_ID: $PROJ_A_ID"
+    trigger -p $PROJ_A_PIPELINE_TOKEN $PROJ_A_ID
 
 
 # test proj a:
