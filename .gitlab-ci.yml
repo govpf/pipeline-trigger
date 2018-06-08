@@ -29,7 +29,7 @@ test basic:
   stage: test
   image: $IMAGE
   script: |
-    trigger -p $PROJ_A_PIPELINE_TOKEN $PROJ_A_ID
+    trigger -a $API_TOKEN $PROJ_A_ID
 
 
 # test proj a:
