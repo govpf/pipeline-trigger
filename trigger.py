@@ -65,7 +65,9 @@ def create_pipeline(project_url, pipeline_token, ref, variables={}) -> Optional[
         data=data
     )
     assert r.status_code == 201, f'expected status code 200, was {r.status_code}'
-    return r.json().get('id', None)
+    pid = r.json().get('id', None)
+    print(f'Pipeline created (id: {pid})')
+    return pid
 
 
 def get_last_pipeline(project_url, api_token, ref):
@@ -114,8 +116,8 @@ def trigger():
         assert status is not None, 'last pipeline status must not be none'
         print(f"Found pipeline {pid} with status '{status}'")
         if status == 'success':
-            print(f"Pipeline {pid} already in state 'success' - not retrying.")
-            sys.exit(0)
+            print(f"Pipeline {pid} already in state 'success' - re-running.")
+            pid = create_pipeline(project_url, pipeline_token, ref, variables)
         else:
             assert args.api_token is not None, 'pipeline retry requires an api token'
             proj = get_project(base_url, args.api_token, proj_id)
@@ -123,7 +125,6 @@ def trigger():
     else:
         print(f"Triggering pipeline for ref '{ref}' for project id {proj_id}")
         pid = create_pipeline(project_url, pipeline_token, ref, variables)
-        print(f'Pipeline created (id: {pid})')
 
     if args.detached:
         print('Detached mode: not monitoring pipeline status - exiting now.')
