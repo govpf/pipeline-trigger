@@ -50,9 +50,9 @@ def create_pipeline(project_url, token, ref, variables=[]) -> Optional[int]:
         headers={
             'PRIVATE-TOKEN': token
         },
-        data=dict(
+        json=dict(
             ref=ref,
-            # FIXME: variables=variables
+            variables=variables
         )
     )
     assert r.status_code == 201, f'expected status code 200, was {r.status_code}'
