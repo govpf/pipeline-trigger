@@ -2,12 +2,12 @@
 
 import argparse
 import sys
+from functools import lru_cache
 from time import sleep
 from typing import Dict, List, Optional
 
 import gitlab
 import requests
-
 
 # see https://docs.gitlab.com/ee/ci/pipelines.html for states
 finished_states = [
@@ -17,6 +17,16 @@ finished_states = [
     'success',
     'skipped'
 ]
+
+
+@lru_cache(maxsize=None)
+def get_gitlab(url, api_token):
+    return gitlab.Gitlab(url, private_token=api_token)
+
+
+@lru_cache(maxsize=None)
+def get_project(url, api_token, proj_id):
+    return get_gitlab(url, api_token).projects.get(proj_id)
 
 
 def parse_args(args):
@@ -31,7 +41,7 @@ def parse_args(args):
     parser.add_argument(
         '--help', action='help', help='show this help message and exit')
     parser.add_argument('-p', '--pipeline-token', required=True, help='pipeline token')
-    parser.add_argument('-r', '--retry', help='retry pipeline', default=False)
+    parser.add_argument('-r', '--retry', action='store_true', default=False, help='retry pipeline')
     parser.add_argument('-s', '--sleep', type=int, default=5)
     parser.add_argument('-t', '--target-ref', required=True, help='target ref (branch, tag, commit)')
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
@@ -73,7 +83,7 @@ def get_last_pipeline(project_url, api_token, ref):
     assert r.status_code == 200, 'expected status code 200'
     res = r.json()
     assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
-    return res[0].get('id')
+    return res[0]
 
 
 def trigger():
@@ -89,19 +99,29 @@ def trigger():
     ref = args.target_ref
     proj_id = args.project_id
     pipeline_token = args.pipeline_token
-    project_url = f"https://{args.host}{args.url_path}/{proj_id}"
+    base_url = f'https://{args.host}'
+    project_url = f"{base_url}{args.url_path}/{proj_id}"
     variables = {}
     if args.env is not None:
         variables = parse_env(args.env)
 
-    print(f"Triggering pipeline for ref '{ref}' for project id: {proj_id})")
-
-    pid = None
-
-    retry = False
-    if retry:
-        pass
+    if args.retry:
+        print(f"Looking for pipeline '{ref}' for project id {proj_id} ...")
+        pipeline = get_last_pipeline(project_url, args.api_token, ref)
+        pid = pipeline.get('id')
+        status = pipeline.get('status')
+        assert pid is not None, 'last pipeline id must not be none'
+        assert status is not None, 'last pipeline status must not be none'
+        print(f"Found pipeline {pid} with status '{status}'")
+        if status == 'success':
+            print(f"Pipeline {pid} already in state 'success' - not retrying.")
+            sys.exit(0)
+        else:
+            assert args.api_token is not None, 'pipeline retry requires an api token'
+            proj = get_project(base_url, args.api_token, proj_id)
+            proj.pipelines.get(pid).retry()
     else:
+        print(f"Triggering pipeline for ref '{ref}' for project id {proj_id}")
         pid = create_pipeline(project_url, pipeline_token, ref, variables)
         print(f'Pipeline created (id: {pid})')
 
@@ -110,10 +130,6 @@ def trigger():
         sys.exit(0)
 
     assert pid is not None, 'must have a valid pipeline id'
-    assert args.api_token, 'api token must be set (unless running in detached mode)'
-
-    gl = gitlab.Gitlab(f'https://{args.host}', private_token=args.api_token)
-    proj = gl.projects.get(proj_id)
 
     print("Waiting for pipeline to finish ...")
 
@@ -123,6 +139,8 @@ def trigger():
 
     while status not in finished_states:
         try:
+            assert args.api_token is not None, 'pipeline status checks require an api token'
+            proj = get_project(base_url, args.api_token, proj_id)
             status = proj.pipelines.get(pid).status
             # reset retries_left if the status call succeeded (fail only on consecutive failures)
             retries_left = max_retries
