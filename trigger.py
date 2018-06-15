@@ -72,7 +72,7 @@ def trigger():
     api_token = args.api_token
     pipeline_token = args.pipeline_token
     project_url = f"https://{args.host}{args.url_path}/{proj_id}"
-    variables = []
+    variables = {}
     if args.env is not None:
         variables = parse_env(args.env)
 
