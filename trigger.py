@@ -22,7 +22,7 @@ def parse_args(args):
         description='Tool to trigger and monitor a remote GitLab pipeline',
         add_help=False)
     parser.add_argument(
-        '-a', '--api-token', required=True, help='personal access token')
+        '-a', '--api-token', help='personal access token (not required when running detached)')
     parser.add_argument('-d', '--detached', action='store_true', default=False)
     parser.add_argument('-e', '--env', action='append')
     parser.add_argument('-h', '--host', default='gitlab.com')
@@ -59,7 +59,6 @@ def create_pipeline(project_url, pipeline_token, ref, variables={}) -> Optional[
 def trigger():
     args = parse_args(sys.argv[1:])
 
-    assert args.api_token, 'api token must be set'
     assert args.pipeline_token, 'pipeline token must be set'
     assert args.project_id, 'project id must be set'
     assert args.host, 'host must be set'
@@ -69,17 +68,13 @@ def trigger():
 
     ref = args.ref or args.target_branch
     proj_id = args.project_id
-    api_token = args.api_token
     pipeline_token = args.pipeline_token
     project_url = f"https://{args.host}{args.url_path}/{proj_id}"
     variables = {}
     if args.env is not None:
         variables = parse_env(args.env)
 
-    gl = gitlab.Gitlab(f'https://{args.host}', private_token=api_token)
-    proj = gl.projects.get(proj_id)
-
-    print(f"Triggering pipeline for ref '{ref}' in project {proj.name} (id: {proj_id})")
+    print(f"Triggering pipeline for ref '{ref}' for project id: {proj_id})")
 
     pid = None
 
@@ -87,13 +82,18 @@ def trigger():
     if retry:
         pass
     else:
-        # create pipeline
-        # pipeline = proj.pipelines.create(dict(ref=ref, variables=variables))
-        # pid = pipeline.id
         pid = create_pipeline(project_url, pipeline_token, ref, variables)
         print(f'Pipeline created (id: {pid})')
 
+    if args.detached:
+        print('Detached mode: not monitoring pipeline status - exiting now.')
+        sys.exit(0)
+
     assert pid is not None, 'must have a valid pipeline id'
+    assert args.api_token, 'api token must be set (unless running in detached mode)'
+
+    gl = gitlab.Gitlab(f'https://{args.host}', private_token=args.api_token)
+    proj = gl.projects.get(proj_id)
 
     status = None
     max_retries = 5
