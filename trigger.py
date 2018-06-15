@@ -28,6 +28,7 @@ def parse_args(args):
     parser.add_argument('-h', '--host', default='gitlab.com')
     parser.add_argument(
         '--help', action='help', help='show this help message and exit')
+    parser.add_argument('-p', '--pipeline-token', required=True, help='pipeline token')
     parser.add_argument('-r', '--ref', help='target ref (branch, tag, sha)')
     parser.add_argument('-s', '--sleep', type=int, default=5)
     parser.add_argument('-t', '--target-branch', help='target branch (deprecated: use -r instead)')
@@ -37,23 +38,19 @@ def parse_args(args):
 
 
 def parse_env(envs: List[str]) -> List[Dict]:
-    res = []
+    res = {}
     for e in envs:
         k, v = e.split('=')
-        res.append(dict(key=k, value=v))
+        res[f'variables[{k}]'] = v
     return res
 
 
-def create_pipeline(project_url, token, ref, variables=[]) -> Optional[int]:
+def create_pipeline(project_url, pipeline_token, ref, variables={}) -> Optional[int]:
+    data = variables.copy()
+    data.update(token=pipeline_token, ref=ref)
     r = requests.post(
-        f'{project_url}/pipeline',
-        headers={
-            'PRIVATE-TOKEN': token
-        },
-        json=dict(
-            ref=ref,
-            variables=variables
-        )
+        f'{project_url}/trigger/pipeline',
+        data=data
     )
     assert r.status_code == 201, f'expected status code 200, was {r.status_code}'
     return r.json().get('id', None)
@@ -63,6 +60,7 @@ def trigger():
     args = parse_args(sys.argv[1:])
 
     assert args.api_token, 'api token must be set'
+    assert args.pipeline_token, 'pipeline token must be set'
     assert args.project_id, 'project id must be set'
     assert args.host, 'host must be set'
     assert args.url_path, 'url path must be set'
@@ -71,13 +69,14 @@ def trigger():
 
     ref = args.ref or args.target_branch
     proj_id = args.project_id
-    token = args.api_token
+    api_token = args.api_token
+    pipeline_token = args.pipeline_token
     project_url = f"https://{args.host}{args.url_path}/{proj_id}"
     variables = []
     if args.env is not None:
         variables = parse_env(args.env)
 
-    gl = gitlab.Gitlab(f'https://{args.host}', private_token=token)
+    gl = gitlab.Gitlab(f'https://{args.host}', private_token=api_token)
     proj = gl.projects.get(proj_id)
 
     print(f"Triggering pipeline for ref '{ref}' in project {proj.name} (id: {proj_id})")
@@ -91,7 +90,7 @@ def trigger():
         # create pipeline
         # pipeline = proj.pipelines.create(dict(ref=ref, variables=variables))
         # pid = pipeline.id
-        pid = create_pipeline(project_url, token, ref, variables)
+        pid = create_pipeline(project_url, pipeline_token, ref, variables)
         print(f'Pipeline created (id: {pid})')
 
     assert pid is not None, 'must have a valid pipeline id'
