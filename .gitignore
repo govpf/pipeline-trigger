@@ -2,3 +2,5 @@
 .python-version
 .coverage
 .pytest_cache/
+.vscode/settings.json
+playground.py

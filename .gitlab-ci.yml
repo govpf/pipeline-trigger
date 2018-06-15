@@ -29,7 +29,7 @@ test basic:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -r $REF $PROJ_B_ID
+    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -r $REF $PROJ_B_ID
 
 
 test legacy target flag:
@@ -37,14 +37,14 @@ test legacy target flag:
   image: $IMAGE
   script:
     # parameter -t is deprecated
-    - trigger -a $API_TOKEN -t $REF $PROJ_B_ID
+    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF $PROJ_B_ID
 
 
 test env variables:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -r $REF -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
+    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -r $REF -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
 
 
 test host & url:
