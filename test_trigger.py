@@ -7,9 +7,9 @@ import trigger
 class Test(unittest.TestCase):
 
     def test_args_1(self):
-        args = trigger.parse_args('-a atok -p ptok -e foo-1=bar2 -e foo2=bar3 proj'.split())
-        assert args.api_token == 'atok'
+        args = trigger.parse_args('-p ptok -t ref -e foo-1=bar2 -e foo2=bar3 proj'.split())
         assert args.pipeline_token == 'ptok'
+        assert args.target_ref == 'ref'
         assert args.env == ['foo-1=bar2', 'foo2=bar3']
         assert args.project_id == 'proj'
 

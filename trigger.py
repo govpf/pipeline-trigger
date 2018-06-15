@@ -8,6 +8,8 @@ from typing import Dict, List, Optional
 import gitlab
 import requests
 
+
+# see https://docs.gitlab.com/ee/ci/pipelines.html for states
 finished_states = [
     'failed',
     'manual',
@@ -29,9 +31,9 @@ def parse_args(args):
     parser.add_argument(
         '--help', action='help', help='show this help message and exit')
     parser.add_argument('-p', '--pipeline-token', required=True, help='pipeline token')
-    parser.add_argument('-r', '--ref', help='target ref (branch, tag, sha)')
+    parser.add_argument('-r', '--retry', help='retry pipeline', default=False)
     parser.add_argument('-s', '--sleep', type=int, default=5)
-    parser.add_argument('-t', '--target-branch', help='target branch (deprecated: use -r instead)')
+    parser.add_argument('-t', '--target-ref', required=True, help='target ref (branch, tag, commit)')
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
     parser.add_argument('project_id')
     return parser.parse_args(args)
@@ -56,6 +58,24 @@ def create_pipeline(project_url, pipeline_token, ref, variables={}) -> Optional[
     return r.json().get('id', None)
 
 
+def get_last_pipeline(project_url, api_token, ref):
+    r = requests.get(
+        f'{project_url}/pipelines',
+        headers={
+            'PRIVATE-TOKEN': api_token
+        },
+        params=dict(
+            ref=ref,
+            order_by='id',
+            sort='desc'
+        )
+    )
+    assert r.status_code == 200, 'expected status code 200'
+    res = r.json()
+    assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
+    return res[0].get('id')
+
+
 def trigger():
     args = parse_args(sys.argv[1:])
 
@@ -63,10 +83,10 @@ def trigger():
     assert args.project_id, 'project id must be set'
     assert args.host, 'host must be set'
     assert args.url_path, 'url path must be set'
-    assert args.ref or args.target_branch, 'must provide either ref (-r) or target_branch (-t)'
+    assert args.target_ref, 'must provide target ref'
     assert args.sleep > 0, 'sleep parameter must be > 0'
 
-    ref = args.ref or args.target_branch
+    ref = args.target_ref
     proj_id = args.project_id
     pipeline_token = args.pipeline_token
     project_url = f"https://{args.host}{args.url_path}/{proj_id}"
@@ -94,6 +114,8 @@ def trigger():
 
     gl = gitlab.Gitlab(f'https://{args.host}', private_token=args.api_token)
     proj = gl.projects.get(proj_id)
+
+    print("Waiting for pipeline to finish ...")
 
     status = None
     max_retries = 5
