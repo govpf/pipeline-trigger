@@ -58,15 +58,17 @@ test retry:
   script: |
     max_retries=10
     cmd="trigger -d -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF -r $PROJ_RETRY_ID"
+    echo "cmd: $cmd"
 
     echo "## Trying until we get first faiure"
     echo
     attempt=1
     until ! $cmd
     do
-      if (( attempt == max_retries ))
-      then
-            echo "Attempt $attempt failed, retrying ..."
+      if [ $attempt -eq max_retries ]; then
+        echo "Attempt $attempt failed, retrying ..."
+      else
+        attempt=$((attempt+1))
       fi
     done
     
@@ -75,9 +77,10 @@ test retry:
     attempt=1
     until $cmd
     do
-      if (( attempt == max_retries ))
-      then
-            echo "Attempt $attempt failed, retrying ..."
+      if [ $attempt -eq max_retries ]; then
+        echo "Attempt $attempt failed, retrying ..."
+      else
+        attempt=$((attempt+1))
       fi
     done
 
