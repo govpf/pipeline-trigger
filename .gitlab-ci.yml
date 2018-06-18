@@ -6,7 +6,9 @@ variables:
   PROJ_A_PIPELINE_TOKEN: $PROJ_A_PIPELINE_TOKEN
   PROJ_B_ID: $PROJ_B_ID
   PROJ_B_PIPELINE_TOKEN: $PROJ_B_PIPELINE_TOKEN
-  TARGET_BRANCH: master
+  PROJ_RETRY_ID: $PROJ_RETRY_ID
+  PROJ_RETRY_PIPELINE_TOKEN: $PROJ_RETRY_PIPELINE_TOKEN
+  REF: master
 
 
 stages:
@@ -25,27 +27,65 @@ build-sha:
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
 
-
-test proj a:
+test basic:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
+    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF $PROJ_B_ID
 
 
-test proj b:
+test env variables:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -h gitlab.com -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH -u /api/v4/projects $PROJ_B_ID
+    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $REF -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
 
 
-test proj a detach:
+test host & url:
+  stage: test
+  image: $IMAGE
+  script: 
+    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF -h gitlab.com -u /api/v4/projects $PROJ_B_ID
+
+
+test detach:
   stage: test
   image: $IMAGE
   script:
-    - trigger -d -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH -e foo1=bar2 -e foo2=bar3 $PROJ_A_ID
+    - trigger -d -p $PROJ_B_PIPELINE_TOKEN -t $REF $PROJ_B_ID
 
+test retry:
+  stage: test
+  image: $IMAGE
+  script: |
+    # https://gitlab.com/finestructure/pt-proj-retry.git is a project that randomly failes with a rate of 50%
+    # In order to test retry behaviour, we run it until it fails and then run until it succeeds.
+    max_retries=20
+    cmd="trigger -a $API_TOKEN -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF -r $PROJ_RETRY_ID"
+
+    echo "## Trying until we get first faiure"
+    echo
+    attempt=1
+    until ! $cmd
+    do
+      if [ $attempt -eq max_retries ]; then
+        echo "Attempt $attempt failed, retrying ..."
+      else
+        attempt=$((attempt+1))
+      fi
+    done
+    
+    echo "## Trying until we get first success"
+    echo
+    attempt=1
+    until $cmd
+    do
+      if [ $attempt -eq max_retries ]; then
+        echo "Attempt $attempt failed, retrying ..."
+      else
+        attempt=$((attempt+1))
+      fi
+    done
 
 .release_template: &release_template
   stage: release

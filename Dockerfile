@@ -1,10 +1,7 @@
-FROM alpine:3.6
+FROM python:3.6.5-alpine
 
-RUN apk add --no-cache \
-    bash \
-    curl \
-    jq \
-    && rm -rf /var/cache/apk/*
+RUN pip install python-gitlab==1.4.0
 
-COPY trigger /usr/bin
-CMD [ "trigger" ]
+COPY trigger.py /usr/bin/trigger
+
+CMD [ "trigger", "--help" ]
