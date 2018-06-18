@@ -73,7 +73,7 @@ test retry:
         echo "Attempt $attempt failed, retrying ..."
         attempt=$((attempt+1))
       else
-        break
+        exit 1
       fi
     done
     
@@ -87,7 +87,7 @@ test retry:
         echo "Attempt $attempt failed, retrying ..."
         attempt=$((attempt+1))
       else
-        break
+        exit 1
       fi
     done
 
