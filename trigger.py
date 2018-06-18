@@ -64,7 +64,7 @@ def create_pipeline(project_url, pipeline_token, ref, variables={}) -> Optional[
         f'{project_url}/trigger/pipeline',
         data=data
     )
-    assert r.status_code == 201, f'expected status code 200, was {r.status_code}'
+    assert r.status_code == 201, f'Failed to create pipeline, api returned status code {r.status_code}'
     pid = r.json().get('id', None)
     print(f'Pipeline created (id: {pid})')
     return pid
