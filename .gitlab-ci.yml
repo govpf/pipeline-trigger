@@ -58,6 +58,8 @@ test retry:
   stage: test
   image: $IMAGE
   script: |
+    # https://gitlab.com/finestructure/pt-proj-retry.git is a project that randomly failes with a rate of 50%
+    # In order to test retry behaviour, we run it until it fails and then run until it succeeds.
     max_retries=20
     cmd="trigger -a $API_TOKEN -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF -r $PROJ_RETRY_ID"
 

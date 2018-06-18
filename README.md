@@ -21,7 +21,7 @@ However, thanks to the GitLab API and docker, it's actually quite simple to set 
 
 ## How to set it up
 
-Here's what the `.gitlab-ci.yml` looks like for the above pipeline (straight from this project's [gitlab-ci.yml](/.gitlab-ci.yml)):
+Here's what the `.gitlab-ci.yml` looks like for the above pipeline (straight from on older version of this project's [gitlab-ci.yml](https://gitlab.com/finestructure/pipeline-trigger/blob/a052c9f47d7f0fdafb9641ccb9ef831b8e1ad49a/.gitlab-ci.yml)):
 
 ```
 variables:
@@ -83,6 +83,16 @@ curl ... -F variables[foo]=bar ...
 ```
 trigger ... -e foo=bar
 ```
+
+## Retries
+
+Sometimes the remote pipeline triggered via pipeline-trigger is complex and/or consists of long-running steps. Because pipeline-trigger by default simply triggers a new remote pipeline (like you would on the remote project in the pipeline view), having to re-run a full pipeline just because one stage failed can be annoying.
+
+Starting with pipeline-trigger 2.0 it is possible to retry the remote pipeline via the `-r` parameter.
+
+Pipeline-trigger will look for the last pipeline that has been run for the given `ref` and inspect its status. If the pipeline was successful, it will create a new pipeline for the `ref`. If it had another status it will retry the pipeline.
+
+The reason `-r` will create a new pipeline successful pipelines is to allow you to configure your pipelines with `-r` in general. If pipeline-trigger did not create new pipelines in case of success you would not be able to trigger further pipelines once a `ref`'s pipeline has succeeded.
 
 ## Self-hosted domains
 
