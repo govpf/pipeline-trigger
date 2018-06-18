@@ -63,6 +63,7 @@ test retry:
     max_retries=20
     cmd="trigger -a $API_TOKEN -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF -r $PROJ_RETRY_ID"
 
+    echo
     echo "## Trying until we get first faiure"
     echo
     attempt=1
@@ -70,11 +71,13 @@ test retry:
     do
       if [ $attempt -eq max_retries ]; then
         echo "Attempt $attempt failed, retrying ..."
-      else
         attempt=$((attempt+1))
+      else
+        break
       fi
     done
     
+    echo
     echo "## Trying until we get first success"
     echo
     attempt=1
@@ -82,8 +85,9 @@ test retry:
     do
       if [ $attempt -eq max_retries ]; then
         echo "Attempt $attempt failed, retrying ..."
-      else
         attempt=$((attempt+1))
+      else
+        break
       fi
     done
 
