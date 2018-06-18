@@ -69,11 +69,12 @@ test retry:
     attempt=1
     until ! $cmd
     do
-      if [ $attempt -eq max_retries ]; then
+      if [ $attempt -le $max_retries ]; then
         echo "Attempt $attempt failed, retrying ..."
         attempt=$((attempt+1))
       else
-        break
+        echo "Max retries exceeded - exiting"
+        exit 1
       fi
     done
     
@@ -83,11 +84,12 @@ test retry:
     attempt=1
     until $cmd
     do
-      if [ $attempt -eq max_retries ]; then
+      if [ $attempt -le $max_retries ]; then
         echo "Attempt $attempt failed, retrying ..."
         attempt=$((attempt+1))
       else
-        break
+        echo "Max retries exceeded - exiting"
+        exit 1
       fi
     done
 
