@@ -59,7 +59,7 @@ test retry:
   image: $IMAGE
   script: |
     max_retries=10
-    cmd="trigger -d -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF -r $PROJ_RETRY_ID"
+    cmd="trigger -a $API_TOKEN -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF -r $PROJ_RETRY_ID"
     echo "cmd: $cmd"
 
     echo "## Trying until we get first faiure"

@@ -82,7 +82,7 @@ def get_last_pipeline(project_url, api_token, ref):
             sort='desc'
         )
     )
-    assert r.status_code == 200, 'expected status code 200'
+    assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     res = r.json()
     assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
     return res[0]
@@ -108,6 +108,7 @@ def trigger():
         variables = parse_env(args.env)
 
     if args.retry:
+        assert args.api_token is not None, 'retry checks require an api token (-a parameter missing)'
         print(f"Looking for pipeline '{ref}' for project id {proj_id} ...")
         pipeline = get_last_pipeline(project_url, args.api_token, ref)
         pid = pipeline.get('id')
@@ -119,7 +120,6 @@ def trigger():
             print(f"Pipeline {pid} already in state 'success' - re-running.")
             pid = create_pipeline(project_url, pipeline_token, ref, variables)
         else:
-            assert args.api_token is not None, 'pipeline retry requires an api token'
             proj = get_project(base_url, args.api_token, proj_id)
             proj.pipelines.get(pid).retry()
     else:
@@ -140,7 +140,7 @@ def trigger():
 
     while status not in finished_states:
         try:
-            assert args.api_token is not None, 'pipeline status checks require an api token'
+            assert args.api_token is not None, 'pipeline status checks require an api token (-a parameter missing)'
             proj = get_project(base_url, args.api_token, proj_id)
             status = proj.pipelines.get(pid).status
             # reset retries_left if the status call succeeded (fail only on consecutive failures)
