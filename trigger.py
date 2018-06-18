@@ -147,13 +147,13 @@ def trigger():
             retries_left = max_retries
         except Exception as e:
             print(f'Polling for status failed: {e}')
-            retries_left -= 1
             if retries_left == 0:
                 print(f'Polling failed {max_retries} consecutive times. Please verify the pipeline url:')
                 print(f'   curl -s -X GET -H "PRIVATE-TOKEN: <private token>" {project_url}/pipelines/{pid}')
                 print('check your api token, or check if there are connection issues.')
                 print()
                 sys.exit(2)
+            retries_left -= 1
 
         print('.', end='', flush=True)
         sleep(args.sleep)
