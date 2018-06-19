@@ -117,9 +117,10 @@ def trigger():
         assert status is not None, 'last pipeline status must not be none'
         print(f"Found pipeline {pid} with status '{status}'")
         if status == 'success':
-            print(f"Pipeline {pid} already in state 'success' - re-running.")
+            print(f"Pipeline {pid} already in state 'success' - re-running ...")
             pid = create_pipeline(project_url, pipeline_token, ref, variables)
         else:
+            print(f"Retrying pipeline {pid} ...")
             proj = get_project(base_url, args.api_token, proj_id)
             proj.pipelines.get(pid).retry()
     else:
