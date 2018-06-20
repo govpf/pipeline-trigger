@@ -78,7 +78,7 @@ GitLab pipeline triggers accept variables being passed along with the trigger co
 curl ... -F variables[foo]=bar ...
 ```
 
-`pipeline-trigger` support this as well via the `-e` switch (`e` for environment variable):
+`pipeline-trigger` supports this as well via the `-e` switch (`e` for environment variable):
 
 ```
 trigger ... -e foo=bar
