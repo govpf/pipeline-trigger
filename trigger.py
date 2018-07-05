@@ -126,8 +126,8 @@ def trigger():
     else:
         proj = get_project(base_url, args.api_token, proj_id)
         print(f"Triggering pipeline for ref '{ref}' for project id {proj_id}")
-        print(f"See pipeline at {proj.web_url}/pipelines/{ref}")
         pid = create_pipeline(project_url, pipeline_token, ref, variables)
+        print(f"See pipeline at {proj.web_url}/pipelines/{pid}")
 
     if args.detached:
         print('Detached mode: not monitoring pipeline status - exiting now.')
