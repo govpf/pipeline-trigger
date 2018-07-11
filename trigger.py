@@ -41,7 +41,8 @@ def parse_args(args):
     parser.add_argument(
         '--help', action='help', help='show this help message and exit')
     parser.add_argument('-p', '--pipeline-token', required=True, help='pipeline token')
-    parser.add_argument('-r', '--retry', action='store_true', default=False, help='retry pipeline')
+    parser.add_argument('--pid', type=int, default=None, help='optional pipeline id of remote pipeline to be retried (implies -r)')
+    parser.add_argument('-r', '--retry', action='store_true', default=False, help='retry latest pipeline for given TARGET_REF')
     parser.add_argument('-s', '--sleep', type=int, default=5)
     parser.add_argument('-t', '--target-ref', required=True, help='target ref (branch, tag, commit)')
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
@@ -68,6 +69,19 @@ def create_pipeline(project_url, pipeline_token, ref, variables={}) -> Optional[
     pid = r.json().get('id', None)
     print(f'Pipeline created (id: {pid})')
     return pid
+
+
+def get_pipeline(project_url, api_token, ref):
+    r = requests.get(
+        f'{project_url}/pipelines',
+        headers={
+            'PRIVATE-TOKEN': api_token
+        }
+    )
+    assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
+    res = r.json()
+    assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
+    return res[0]
 
 
 def get_last_pipeline(project_url, api_token, ref):
@@ -107,14 +121,19 @@ def trigger(args):
     if args.env is not None:
         variables = parse_env(args.env)
 
-    if args.retry:
+    if args.retry or args.pid is not None:
         assert args.api_token is not None, 'retry checks require an api token (-a parameter missing)'
-        print(f"Looking for pipeline '{ref}' for project id {proj_id} ...")
-        pipeline = get_last_pipeline(project_url, args.api_token, ref)
-        pid = pipeline.get('id')
+        if args.pid is None:
+            print(f"Looking for pipeline '{ref}' for project id {proj_id} ...")
+            pipeline = get_last_pipeline(project_url, args.api_token, ref)
+            pid = pipeline.get('id')
+        else:
+            print(f"Fetching for pipeline '{pid}' for project id {proj_id} ...")
+            pipeline = get_pipeline(project_url, args.api_token, pid)
+            pid = args.pid
         status = pipeline.get('status')
-        assert pid is not None, 'last pipeline id must not be none'
-        assert status is not None, 'last pipeline status must not be none'
+        assert pid is not None, 'refresh pipeline id must not be none'
+        assert status is not None, 'refresh pipeline status must not be none'
         print(f"Found pipeline {pid} with status '{status}'")
         if status == 'success':
             print(f"Pipeline {pid} already in state 'success' - re-running ...")
