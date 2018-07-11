@@ -88,8 +88,8 @@ def get_last_pipeline(project_url, api_token, ref):
     return res[0]
 
 
-def trigger():
-    args = parse_args(sys.argv[1:])
+def trigger(args):
+    args = parse_args(args)
 
     assert args.pipeline_token, 'pipeline token must be set'
     assert args.project_id, 'project id must be set'
@@ -172,4 +172,4 @@ def trigger():
 
 
 if __name__ == "__main__":
-    trigger()
+    trigger(sys.argv[1:])
