@@ -124,10 +124,15 @@ def trigger():
             proj = get_project(base_url, args.api_token, proj_id)
             proj.pipelines.get(pid).retry()
     else:
-        proj = get_project(base_url, args.api_token, proj_id)
         print(f"Triggering pipeline for ref '{ref}' for project id {proj_id}")
         pid = create_pipeline(project_url, pipeline_token, ref, variables)
-        print(f"See pipeline at {proj.web_url}/pipelines/{pid}")
+        try:
+            proj = get_project(base_url, args.api_token, proj_id)
+            print(f"See pipeline at {proj.web_url}/pipelines/{pid}")
+        except Exception:
+            # get_projects can fail if no api_token has been provided
+            # since we're only logging here we simply ignore this
+            pass
 
     if args.detached:
         print('Detached mode: not monitoring pipeline status - exiting now.')
