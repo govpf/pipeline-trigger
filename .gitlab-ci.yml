@@ -27,6 +27,7 @@ build-sha:
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
 
+
 test basic:
   stage: test
   image: $IMAGE
@@ -53,6 +54,7 @@ test detach:
   image: $IMAGE
   script:
     - trigger -d -p $PROJ_B_PIPELINE_TOKEN -t $REF $PROJ_B_ID
+
 
 test retry:
   stage: test
@@ -92,6 +94,15 @@ test retry:
         exit 1
       fi
     done
+
+
+test retry pid:
+  stage: test
+  image: $IMAGE
+  script: |
+    pid=25554047  # known existing pipeline id in proj-retry
+    cmd="trigger -a $API_TOKEN -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_RETRY_ID"
+
 
 .release_template: &release_template
   stage: release
