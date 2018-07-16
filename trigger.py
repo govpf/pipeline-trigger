@@ -19,6 +19,11 @@ finished_states = [
 ]
 
 
+class PipelineFailure(Exception):
+    def __init__(self, return_code=None):
+        self.return_code = return_code
+
+
 @lru_cache(maxsize=None)
 def get_gitlab(url, api_token):
     return gitlab.Gitlab(url, private_token=api_token)
@@ -46,7 +51,6 @@ def parse_args(args: List[str]):
     parser.add_argument('-s', '--sleep', type=int, default=5)
     parser.add_argument('-t', '--target-ref', required=True, help='target ref (branch, tag, commit)')
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
-    parser.add_argument('--pid-path', type=str, help='write triggered pipeline id out to given path (useful for further processing)')
     parser.add_argument('project_id')
     return parser.parse_args(args)
 
@@ -156,18 +160,11 @@ def trigger(args: List[str]) -> int:
 
     if args.detached:
         print('Detached mode: not monitoring pipeline status - exiting now.')
-        return 0
+        return pid
 
     assert pid is not None, 'must have a valid pipeline id'
 
     print(f"Waiting for pipeline {pid} to finish ...")
-
-    if args.pid_path is not None:
-        try:
-            with open(args.pid_path, 'w') as f:
-                f.write(pid)
-        except Exception as e:
-            print(f'Writing pid file at {args.pid_path} raised exception: {e}')
 
     status = None
     max_retries = 5
@@ -187,7 +184,7 @@ def trigger(args: List[str]) -> int:
                 print(f'   curl -s -X GET -H "PRIVATE-TOKEN: <private token>" {project_url}/pipelines/{pid}')
                 print('check your api token, or check if there are connection issues.')
                 print()
-                return 2
+                raise PipelineFailure(return_code=2)
             retries_left -= 1
 
         print('.', end='', flush=True)
@@ -196,15 +193,15 @@ def trigger(args: List[str]) -> int:
     print()
 
     if status == 'success':
-        ret = 0
         print('Pipeline succeeded')
+        return pid
     else:
-        ret = 1
-        print(f'Pipeline failed with status: {status}')
-
-    return ret
+        raise PipelineFailure(return_code=1)
 
 
 if __name__ == "__main__":
-    ret = trigger(sys.argv[1:])
-    sys.exit(ret)
+    try:
+        trigger(sys.argv[1:])
+        sys.exit(0)
+    except PipelineFailure as e:
+        sys.exit(e.return_code)
