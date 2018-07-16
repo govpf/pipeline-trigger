@@ -17,6 +17,17 @@ class Test(unittest.TestCase):
         with pytest.raises(SystemExit):
             trigger.parse_args('-a foo -e foo1=bar2 foo2=bar3 dangling'.split())
 
-    def test_pargs_env(self):
+    def test_parse_args_retry(self):
+        args = trigger.parse_args('-a foo -p bar -t ref proj'.split())
+        assert args.retry is False
+        assert args.pid is None
+        args = trigger.parse_args('-a foo -p bar -t ref --pid 123 proj'.split())
+        assert args.retry is False
+        assert args.pid == 123
+        args = trigger.parse_args('-a foo -p bar -t ref -r --pid 123 proj'.split())
+        assert args.retry is True
+        assert args.pid == 123
+
+    def test_parse_env(self):
         envs = trigger.parse_env(['foo-1=bar2', 'foo2=bar3'])
         assert envs == {'variables[foo-1]': 'bar2', 'variables[foo2]': 'bar3'}
