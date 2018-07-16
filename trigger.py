@@ -158,11 +158,11 @@ def trigger(args: List[str]) -> int:
             # since we're only logging here we simply ignore this
             pass
 
+    assert pid is not None, 'must have a valid pipeline id'
+
     if args.detached:
         print('Detached mode: not monitoring pipeline status - exiting now.')
         return pid
-
-    assert pid is not None, 'must have a valid pipeline id'
 
     print(f"Waiting for pipeline {pid} to finish ...")
 
