@@ -46,6 +46,7 @@ def parse_args(args):
     parser.add_argument('-s', '--sleep', type=int, default=5)
     parser.add_argument('-t', '--target-ref', required=True, help='target ref (branch, tag, commit)')
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
+    parser.add_argument('--pid-path', type=str, help='write triggered pipeline id out to given path (useful for further processing)')
     parser.add_argument('project_id')
     return parser.parse_args(args)
 
@@ -159,7 +160,14 @@ def trigger(args):
 
     assert pid is not None, 'must have a valid pipeline id'
 
-    print("Waiting for pipeline to finish ...")
+    print(f"Waiting for pipeline {pid} to finish ...")
+
+    if args.pid_path is not None:
+        try:
+            with open(args.pid_path, 'w') as f:
+                f.write(pid)
+        except Exception as e:
+            print(f'Writing pid file at {args.pid_path} raised exception: {e}')
 
     status = None
     max_retries = 5
