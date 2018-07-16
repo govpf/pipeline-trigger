@@ -29,7 +29,7 @@ def get_project(url, api_token, proj_id):
     return get_gitlab(url, api_token).projects.get(proj_id)
 
 
-def parse_args(args):
+def parse_args(args: List[str]):
     parser = argparse.ArgumentParser(
         description='Tool to trigger and monitor a remote GitLab pipeline',
         add_help=False)
@@ -103,7 +103,7 @@ def get_last_pipeline(project_url, api_token, ref):
     return res[0]
 
 
-def trigger(args):
+def trigger(args: List[str]) -> int:
     args = parse_args(args)
 
     assert args.pipeline_token, 'pipeline token must be set'
@@ -156,7 +156,7 @@ def trigger(args):
 
     if args.detached:
         print('Detached mode: not monitoring pipeline status - exiting now.')
-        sys.exit(0)
+        return 0
 
     assert pid is not None, 'must have a valid pipeline id'
 
@@ -187,7 +187,7 @@ def trigger(args):
                 print(f'   curl -s -X GET -H "PRIVATE-TOKEN: <private token>" {project_url}/pipelines/{pid}')
                 print('check your api token, or check if there are connection issues.')
                 print()
-                sys.exit(2)
+                return 2
             retries_left -= 1
 
         print('.', end='', flush=True)
@@ -202,8 +202,9 @@ def trigger(args):
         ret = 1
         print(f'Pipeline failed with status: {status}')
 
-    sys.exit(ret)
+    return ret
 
 
 if __name__ == "__main__":
-    trigger(sys.argv[1:])
+    ret = trigger(sys.argv[1:])
+    sys.exit(ret)
