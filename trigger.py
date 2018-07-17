@@ -21,8 +21,9 @@ finished_states = [
 
 
 class PipelineFailure(Exception):
-    def __init__(self, return_code=None):
+    def __init__(self, return_code=None, pipeline_id=None):
         self.return_code = return_code
+        self.pipeline_id = pipeline_id
 
 
 @lru_cache(maxsize=None)
@@ -183,7 +184,7 @@ def trigger(args: List[str]) -> int:
                 print(f'   curl -s -X GET -H "PRIVATE-TOKEN: <private token>" {project_url}/pipelines/{pid}')
                 print('check your api token, or check if there are connection issues.')
                 print()
-                raise PipelineFailure(return_code=2)
+                raise PipelineFailure(return_code=2, pipeline_id=pid)
             retries_left -= 1
 
         print('.', end='', flush=True)
@@ -195,7 +196,7 @@ def trigger(args: List[str]) -> int:
         print('Pipeline succeeded')
         return pid
     else:
-        raise PipelineFailure(return_code=1)
+        raise PipelineFailure(return_code=1, pipeline_id=pid)
 
 
 if __name__ == "__main__":
