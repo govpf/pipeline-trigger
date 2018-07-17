@@ -100,8 +100,8 @@ test retry pid:
   stage: test
   image: $IMAGE
   script: |
-    pid=25554047  # known existing pipeline id in proj-retry
-    trigger -a $API_TOKEN -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_RETRY_ID
+    pid=25900902  # known existing pipeline id in proj-b
+    trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_B_ID
 
 
 .release_template: &release_template
