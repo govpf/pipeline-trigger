@@ -133,9 +133,9 @@ def trigger(args: List[str]) -> int:
             pipeline = get_last_pipeline(project_url, args.api_token, ref)
             pid = pipeline.get('id')
         else:
+            pid = args.pid
             print(f"Fetching for pipeline '{pid}' for project id {proj_id} ...")
             pipeline = get_pipeline(project_url, args.api_token, pid)
-            pid = args.pid
         status = pipeline.get('status')
         assert pid is not None, 'refresh pipeline id must not be none'
         assert status is not None, 'refresh pipeline status must not be none'
