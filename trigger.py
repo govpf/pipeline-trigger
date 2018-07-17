@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# %%
 
 import argparse
 import sys
@@ -76,17 +77,15 @@ def create_pipeline(project_url, pipeline_token, ref, variables={}) -> Optional[
     return pid
 
 
-def get_pipeline(project_url, api_token, ref):
+def get_pipeline(project_url, api_token, pid):
     r = requests.get(
-        f'{project_url}/pipelines',
+        f'{project_url}/pipelines/{pid}',
         headers={
             'PRIVATE-TOKEN': api_token
         }
     )
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
-    res = r.json()
-    assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
-    return res[0]
+    return r.json()
 
 
 def get_last_pipeline(project_url, api_token, ref):
