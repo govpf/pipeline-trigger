@@ -185,6 +185,10 @@ def trigger(args: List[str]) -> int:
         print('Detached mode: not monitoring pipeline status - exiting now.')
         return pid
 
+    # after this point (i.e. not running detached) we require api_token to be set
+    api_token = args.api_token
+    assert api_token is not None, 'pipeline status checks require an api token (-a parameter missing)'
+
     print(f"Waiting for pipeline {pid} to finish ...")
 
     status = None
@@ -193,8 +197,7 @@ def trigger(args: List[str]) -> int:
 
     while status not in finished_states:
         try:
-            assert args.api_token is not None, 'pipeline status checks require an api token (-a parameter missing)'
-            proj = get_project(base_url, args.api_token, proj_id)
+            proj = get_project(base_url, api_token, proj_id)
             status = proj.pipelines.get(pid).status
             # reset retries_left if the status call succeeded (fail only on consecutive failures)
             retries_left = max_retries
@@ -213,12 +216,12 @@ def trigger(args: List[str]) -> int:
 
     print()
     if args.job_output:
-        jobs = get_pipeline_jobs(project_url, args.api_token, pid)
+        jobs = get_pipeline_jobs(project_url, api_token, pid)
         print(f'Pipeline {pid} job output:')
         for job in jobs:
             name = job['name']
             print(f'Job: {name}')
-            print(get_job_trace(project_url, args.api_token, job['id']))
+            print(get_job_trace(project_url, api_token, job['id']))
             print()
 
     if status == 'success':
