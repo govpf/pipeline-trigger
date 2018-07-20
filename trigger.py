@@ -218,7 +218,7 @@ def trigger(args: List[str]) -> int:
         sleep(args.sleep)
 
     print()
-    if args.job_output:
+    if args.output:
         jobs = get_pipeline_jobs(project_url, api_token, pid)
         print(f'Pipeline {pid} job output:')
         for job in jobs:
