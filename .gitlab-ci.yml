@@ -39,7 +39,7 @@ test env variables & job output:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $REF -e foo1=bar2 -e foo2=bar3 -j $PROJ_A_ID
+    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $REF -e foo1=bar2 -e foo2=bar3 -o $PROJ_A_ID
 
 
 test host & url:
