@@ -47,6 +47,7 @@ def parse_args(args: List[str]):
     parser.add_argument('-h', '--host', default='gitlab.com')
     parser.add_argument(
         '--help', action='help', help='show this help message and exit')
+    parser.add_argument('-j', '--job-output', action='store_true', default=False, help='Show triggered pipline job output upon completion')
     parser.add_argument('-p', '--pipeline-token', required=True, help='pipeline token')
     parser.add_argument('--pid', type=int, default=None, help='optional pipeline id of remote pipeline to be retried (implies -r)')
     parser.add_argument('-r', '--retry', action='store_true', default=False, help='retry latest pipeline for given TARGET_REF')
@@ -106,6 +107,26 @@ def get_last_pipeline(project_url, api_token, ref):
     assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
     return res[0]
 
+def get_pipeline_jobs(project_url, api_token, pipeline):
+    r = requests.get(
+        f'{project_url}/pipelines/{pipeline}/jobs',
+        headers={
+            'PRIVATE-TOKEN': api_token
+        }
+    )
+    assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
+    res = r.json()
+    return res
+
+def get_job_trace(project_url, api_token, job):
+    r = requests.get(
+        f'{project_url}/jobs/{job}/trace',
+        headers={
+            'PRIVATE-TOKEN': api_token
+        }
+    )
+    assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
+    return r.text
 
 def trigger(args: List[str]) -> int:
     args = parse_args(args)
@@ -164,6 +185,10 @@ def trigger(args: List[str]) -> int:
         print('Detached mode: not monitoring pipeline status - exiting now.')
         return pid
 
+    # after this point (i.e. not running detached) we require api_token to be set
+    api_token = args.api_token
+    assert api_token is not None, 'pipeline status checks require an api token (-a parameter missing)'
+
     print(f"Waiting for pipeline {pid} to finish ...")
 
     status = None
@@ -172,8 +197,7 @@ def trigger(args: List[str]) -> int:
 
     while status not in finished_states:
         try:
-            assert args.api_token is not None, 'pipeline status checks require an api token (-a parameter missing)'
-            proj = get_project(base_url, args.api_token, proj_id)
+            proj = get_project(base_url, api_token, proj_id)
             status = proj.pipelines.get(pid).status
             # reset retries_left if the status call succeeded (fail only on consecutive failures)
             retries_left = max_retries
@@ -191,6 +215,14 @@ def trigger(args: List[str]) -> int:
         sleep(args.sleep)
 
     print()
+    if args.job_output:
+        jobs = get_pipeline_jobs(project_url, api_token, pid)
+        print(f'Pipeline {pid} job output:')
+        for job in jobs:
+            name = job['name']
+            print(f'Job: {name}')
+            print(get_job_trace(project_url, api_token, job['id']))
+            print()
 
     if status == 'success':
         print('Pipeline succeeded')
