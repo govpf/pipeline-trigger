@@ -35,7 +35,7 @@ test basic:
     - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF $PROJ_B_ID
 
 
-test env variables:
+test env variables & job output:
   stage: test
   image: $IMAGE
   script: 
