@@ -47,7 +47,7 @@ def parse_args(args: List[str]):
     parser.add_argument('-h', '--host', default='gitlab.com')
     parser.add_argument(
         '--help', action='help', help='show this help message and exit')
-    parser.add_argument('-j', '--job-output', action='store_true', default=False, help='Show triggered pipline job output upon completion')
+    parser.add_argument('-o', '--output', action='store_true', default=False, help='Show triggered pipline job output upon completion')
     parser.add_argument('-p', '--pipeline-token', required=True, help='pipeline token')
     parser.add_argument('--pid', type=int, default=None, help='optional pipeline id of remote pipeline to be retried (implies -r)')
     parser.add_argument('-r', '--retry', action='store_true', default=False, help='retry latest pipeline for given TARGET_REF')
@@ -107,6 +107,7 @@ def get_last_pipeline(project_url, api_token, ref):
     assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
     return res[0]
 
+
 def get_pipeline_jobs(project_url, api_token, pipeline):
     r = requests.get(
         f'{project_url}/pipelines/{pipeline}/jobs',
@@ -118,6 +119,7 @@ def get_pipeline_jobs(project_url, api_token, pipeline):
     res = r.json()
     return res
 
+
 def get_job_trace(project_url, api_token, job):
     r = requests.get(
         f'{project_url}/jobs/{job}/trace',
@@ -127,6 +129,7 @@ def get_job_trace(project_url, api_token, job):
     )
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     return r.text
+
 
 def trigger(args: List[str]) -> int:
     args = parse_args(args)
@@ -215,7 +218,7 @@ def trigger(args: List[str]) -> int:
         sleep(args.sleep)
 
     print()
-    if args.job_output:
+    if args.output:
         jobs = get_pipeline_jobs(project_url, api_token, pid)
         print(f'Pipeline {pid} job output:')
         for job in jobs:
