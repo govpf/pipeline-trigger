@@ -1,6 +1,6 @@
 FROM python:3.6.5-alpine
 
-RUN pip install python-gitlab==1.4.0
+RUN pip install python-gitlab==1.6.0
 
 # copy trigger.py into site-packages to make it importable
 COPY trigger.py /usr/local/lib/python3.6/site-packages/trigger.py
