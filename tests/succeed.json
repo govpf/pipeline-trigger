@@ -1,0 +1,9 @@
+{
+  "branch": "master",
+  "commit_message": "update to succeed",
+  "actions": [{
+      "action": "update",
+      "file_path": ".gitlab-ci.yml",
+      "content": "image: busybox:latest\ntest:\n  stage: test\n  script:\n    - exit 0\n"
+  }]
+}

@@ -1,14 +1,16 @@
 variables:
   IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  PROJ_A_ID: 4624510
+  PROJ_B_ID: 4624517
+  PROJ_RETRY_ID: 6955857
+  PROJ_TEST_ID: 8223553
+  REF: master
   # set via secret variables
   API_TOKEN: $PERSONAL_ACCESS_TOKEN
-  PROJ_A_ID: $PROJ_A_ID
   PROJ_A_PIPELINE_TOKEN: $PROJ_A_PIPELINE_TOKEN
-  PROJ_B_ID: $PROJ_B_ID
   PROJ_B_PIPELINE_TOKEN: $PROJ_B_PIPELINE_TOKEN
-  PROJ_RETRY_ID: $PROJ_RETRY_ID
   PROJ_RETRY_PIPELINE_TOKEN: $PROJ_RETRY_PIPELINE_TOKEN
-  REF: master
+  PROJ_TEST_PIPELINE_TOKEN: $PROJ_TEST_PIPELINE_TOKEN
 
 
 stages:
@@ -102,6 +104,36 @@ test retry pid:
   script: |
     pid=25900902  # known existing pipeline id in proj-b
     trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_B_ID
+
+
+test issue 14:
+  stage: test
+  image: $IMAGE
+  script: |
+    # test for https://gitlab.com/finestructure/pipeline-trigger/issues/14
+    apk add --no-cache curl
+
+    echo -e "\nPushing failing commit ..."
+    _=$(./tests/commit.sh $API_TOKEN $PROJ_TEST_ID ./tests/fail.json)
+
+    echo -e "\nFirst trigger call (expected to fail, just to get a pipeline id) ..."
+    res=$(
+      trigger -a $API_TOKEN -p $PROJ_TEST_PIPELINE_TOKEN -t $REF $PROJ_TEST_ID || echo -e "\nfailed as expected"
+    )
+    echo -e "\nFirst trigger done:\n$res"
+    
+    # could use something a bit more elegant than this
+    pid=$(echo $res | python -c "import re, sys; print(re.match('.+ Waiting for pipeline (\d+) to finish .+', sys.stdin.read()).groups()[0])")
+    echo -e "\nPID from first run: $pid"
+
+    # test the result we've received from first trigger
+    echo "$res" | grep "failed as expected$" > /dev/null 2&>1
+
+    echo -e "\nPushing succeeding commit ..."
+    _=$(./tests/commit.sh $API_TOKEN $PROJ_TEST_ID ./tests/succeed.json)
+
+    echo -e "\nSecond trigger call, now with -f flag (expected to retry new pipeline and succeed) ..."
+    trigger -a $API_TOKEN -p $PROJ_TEST_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_TEST_ID
 
 
 .release_template: &release_template

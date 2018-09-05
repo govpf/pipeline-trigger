@@ -86,9 +86,9 @@ trigger ... -e foo=bar
 
 ## Retries
 
-Sometimes the remote pipeline triggered via pipeline-trigger is complex and/or consists of long-running steps. Because pipeline-trigger by default simply triggers a new remote pipeline (like you would on the remote project in the pipeline view), having to re-run a full pipeline just because one stage failed can be annoying.
+Sometimes the remote pipeline triggered via pipeline-trigger is complex and/or consists of long-running steps. Because pipeline-trigger by default simply triggers a new remote pipeline (like you would in the pipeline UI), having to re-run a full pipeline just because one stage failed can be annoying.
 
-Starting with pipeline-trigger 2.0.0 it is possible to retry the remote pipeline via the `-r` parameter.
+Starting with pipeline-trigger 2.0.0 it is possible to retry the remote pipeline via the `--retry` (or `-r`) parameter.
 
 Pipeline-trigger will look for the last pipeline that has been run for the given `ref` and inspect its status. If the pipeline was successful, it will create a new pipeline for the `ref`. If it had another status it will retry the pipeline.
 
