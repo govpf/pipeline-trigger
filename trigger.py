@@ -131,6 +131,19 @@ def get_job_trace(project_url, api_token, job):
     return r.text
 
 
+def get_sha(project_url, api_token, ref) -> Optional[str]:
+    """ Get the sha at the tip of ref
+    """
+    r = requests.get(
+        f'{project_url}/repository/commits/{ref}',
+        headers={
+            'PRIVATE-TOKEN': api_token
+        }
+    )
+    assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
+    return r.json().get('id')
+
+
 def trigger(args: List[str]) -> int:
     args = parse_args(args)
 
@@ -152,6 +165,7 @@ def trigger(args: List[str]) -> int:
 
     if args.retry or args.pid is not None:
         assert args.api_token is not None, 'retry checks require an api token (-a parameter missing)'
+
         if args.pid is None:
             print(f"Looking for pipeline '{ref}' for project id {proj_id} ...")
             pipeline = get_last_pipeline(project_url, args.api_token, ref)
@@ -160,17 +174,29 @@ def trigger(args: List[str]) -> int:
             pid = args.pid
             print(f"Fetching for pipeline '{pid}' for project id {proj_id} ...")
             pipeline = get_pipeline(project_url, args.api_token, pid)
+
         status = pipeline.get('status')
-        assert pid is not None, 'refresh pipeline id must not be none'
-        assert status is not None, 'refresh pipeline status must not be none'
-        print(f"Found pipeline {pid} with status '{status}'")
-        if status == 'success':
+        assert pid, 'refresh pipeline id must not be none'
+        assert status, 'refresh pipeline status must not be none'
+
+        pipeline_sha = pipeline.get('sha')
+        ref_tip_sha = get_sha(project_url, args.api_token, ref)
+        outdated = pipeline_sha != ref_tip_sha
+
+        outdated_str = 'outdated' if outdated else 'up to date'
+        print(f"Found {outdated_str} pipeline {pid} with status '{status}'")
+
+        if outdated:
+            print(f"Pipeline {pid} for {ref} outdated (sha: {pipeline_sha[:6]}, tip is {ref_tip_sha[:6]}) - re-running ...")
+            pid = create_pipeline(project_url, pipeline_token, ref, variables)
+        elif status == 'success':
             print(f"Pipeline {pid} already in state 'success' - re-running ...")
             pid = create_pipeline(project_url, pipeline_token, ref, variables)
         else:
             print(f"Retrying pipeline {pid} ...")
             proj = get_project(base_url, args.api_token, proj_id)
             proj.pipelines.get(pid).retry()
+
     else:
         print(f"Triggering pipeline for ref '{ref}' for project id {proj_id}")
         pid = create_pipeline(project_url, pipeline_token, ref, variables)
