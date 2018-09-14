@@ -48,7 +48,9 @@ test host & url:
   stage: test
   image: $IMAGE
   script: 
+    # test both with and without protocol prefix
     - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF -h gitlab.com -u /api/v4/projects $PROJ_B_ID
+    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF -h https://gitlab.com -u /api/v4/projects $PROJ_B_ID
 
 
 test detach:
