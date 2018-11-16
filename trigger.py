@@ -128,6 +128,7 @@ def get_job_trace(project_url, api_token, job):
         }
     )
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
+    r.encoding = 'utf-8'
     return r.text
 
 
