@@ -10,13 +10,23 @@ from typing import Dict, List, Optional
 import gitlab
 import requests
 
+STATUS_FAILED = 'failed'
+STATUS_MANUAL = 'manual'
+STATUS_CANCELED = 'canceled'
+STATUS_SUCCESS = 'success'
+STATUS_SKIPPED = 'skipped'
+
+ACTION_FAIL = 'fail'
+ACTION_PASS = 'pass'
+ACTION_PLAY = 'play'
+
 # see https://docs.gitlab.com/ee/ci/pipelines.html for states
 finished_states = [
-    'failed',
-    'manual',
-    'canceled',
-    'success',
-    'skipped'
+    STATUS_FAILED,
+    STATUS_MANUAL,
+    STATUS_CANCELED,
+    STATUS_SUCCESS,
+    STATUS_SKIPPED,
 ]
 
 
@@ -54,6 +64,7 @@ def parse_args(args: List[str]):
     parser.add_argument('-s', '--sleep', type=int, default=5)
     parser.add_argument('-t', '--target-ref', required=True, help='target ref (branch, tag, commit)')
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
+    parser.add_argument('--on-manual', default=ACTION_FAIL, choices=[ACTION_FAIL, ACTION_PASS, ACTION_PLAY], help='action if "manual" status occurs')
     parser.add_argument('project_id')
     return parser.parse_args(args)
 
@@ -193,7 +204,7 @@ def trigger(args: List[str]) -> int:
         if outdated:
             print(f"Pipeline {pid} for {ref} outdated (sha: {pipeline_sha[:6]}, tip is {ref_tip_sha[:6]}) - re-running ...")
             pid = create_pipeline(project_url, pipeline_token, ref, variables)
-        elif status == 'success':
+        elif status == STATUS_SUCCESS:
             print(f"Pipeline {pid} already in state 'success' - re-running ...")
             pid = create_pipeline(project_url, pipeline_token, ref, variables)
         else:
@@ -231,11 +242,26 @@ def trigger(args: List[str]) -> int:
     while status not in finished_states:
         try:
             proj = get_project(base_url, api_token, proj_id)
-            status = proj.pipelines.get(pid).status
+            pipeline = proj.pipelines.get(pid)
+            status = pipeline.status
+            if status == STATUS_MANUAL and args.on_manual == ACTION_PLAY:
+                manual_job = None
+                for job in pipeline.jobs.list():
+                    if job.status == STATUS_MANUAL:
+                        manual_job = job
+                        break
+                if manual_job is None:
+                    print('\nNo manual jobs found!')
+                else:
+                    # wipe status, because the pipeline will continue after playing the manual job
+                    status = None
+                    print(f'\nPlaying manual job "{manual_job.name}" from stage "{manual_job.stage}"...')
+                    proj.jobs.get(manual_job.id, lazy=True).play()
+
             # reset retries_left if the status call succeeded (fail only on consecutive failures)
             retries_left = max_retries
         except Exception as e:
-            print(f'Polling for status failed: {e}')
+            print(f'\nPolling for status failed: {e}')
             if retries_left == 0:
                 print(f'Polling failed {max_retries} consecutive times. Please verify the pipeline url:')
                 print(f'   curl -s -X GET -H "PRIVATE-TOKEN: <private token>" {project_url}/pipelines/{pid}')
@@ -257,10 +283,14 @@ def trigger(args: List[str]) -> int:
             print(get_job_trace(project_url, api_token, job['id']))
             print()
 
-    if status == 'success':
+    if status == STATUS_SUCCESS:
         print('Pipeline succeeded')
         return pid
+    elif status == STATUS_MANUAL and args.on_manual == ACTION_PASS:
+        print('Pipeline status is "manual", action "pass"')
+        return pid
     else:
+        print(f"Pipeline failed! Check details at '{pipeline.web_url}'")
         raise PipelineFailure(return_code=1, pipeline_id=pid)
 
 
