@@ -108,6 +108,13 @@ test retry pid:
     trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_B_ID
 
 
+test manual:
+  stage: test
+  image: $IMAGE
+  script: 
+    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t manual $PROJ_B_ID
+
+
 test issue 14:
   stage: test
   image: $IMAGE
