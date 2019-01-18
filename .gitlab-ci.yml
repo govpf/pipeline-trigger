@@ -6,11 +6,11 @@ variables:
   PROJ_TEST_ID: 8223553
   REF: master
   # set via secret variables
-  API_TOKEN: $PERSONAL_ACCESS_TOKEN
-  PROJ_A_PIPELINE_TOKEN: $PROJ_A_PIPELINE_TOKEN
-  PROJ_B_PIPELINE_TOKEN: $PROJ_B_PIPELINE_TOKEN
-  PROJ_RETRY_PIPELINE_TOKEN: $PROJ_RETRY_PIPELINE_TOKEN
-  PROJ_TEST_PIPELINE_TOKEN: $PROJ_TEST_PIPELINE_TOKEN
+  API_TOKEN: "$PERSONAL_ACCESS_TOKEN"
+  PROJ_A_PIPELINE_TOKEN: ""$PROJ_A_PIPELINE_TOKEN""
+  PROJ_B_PIPELINE_TOKEN: "$PROJ_B_PIPELINE_TOKEN"
+  PROJ_RETRY_PIPELINE_TOKEN: "$PROJ_RETRY_PIPELINE_TOKEN"
+  PROJ_TEST_PIPELINE_TOKEN: "$PROJ_TEST_PIPELINE_TOKEN"
 
 
 stages:
@@ -34,14 +34,14 @@ test basic:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF $PROJ_B_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
 
 test env variables & job output:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $REF -e foo1=bar2 -e foo2=bar3 -o $PROJ_A_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_A_PIPELINE_TOKEN" -t $REF -e foo1=bar2 -e foo2=bar3 -o $PROJ_A_ID
 
 
 test host & url:
@@ -49,15 +49,15 @@ test host & url:
   image: $IMAGE
   script: 
     # test both with and without protocol prefix
-    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF -h gitlab.com -u /api/v4/projects $PROJ_B_ID
-    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF -h https://gitlab.com -u /api/v4/projects $PROJ_B_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -h gitlab.com -u /api/v4/projects $PROJ_B_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -h https://gitlab.com -u /api/v4/projects $PROJ_B_ID
 
 
 test detach:
   stage: test
   image: $IMAGE
   script:
-    - trigger -d -p $PROJ_B_PIPELINE_TOKEN -t $REF $PROJ_B_ID
+    - trigger -d -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
 
 test retry:
@@ -67,7 +67,7 @@ test retry:
     # https://gitlab.com/finestructure/pt-proj-retry.git is a project that randomly failes with a rate of 50%
     # In order to test retry behaviour, we run it until it fails and then run until it succeeds.
     max_retries=20
-    cmd="trigger -a $API_TOKEN -p $PROJ_RETRY_PIPELINE_TOKEN -t $REF -r $PROJ_RETRY_ID"
+    cmd="trigger -a "$API_TOKEN" -p "$PROJ_RETRY_PIPELINE_TOKEN" -t $REF -r $PROJ_RETRY_ID"
 
     echo
     echo "## Trying until we get first faiure"
@@ -105,14 +105,14 @@ test retry pid:
   image: $IMAGE
   script: |
     pid=25900902  # known existing pipeline id in proj-b
-    trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_B_ID
+    trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_B_ID
 
 
 test manual:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t manual $PROJ_B_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual $PROJ_B_ID
 
 
 test issue 14:
@@ -123,11 +123,11 @@ test issue 14:
     apk add --no-cache curl
 
     echo -e "\nPushing failing commit ..."
-    _=$(./tests/commit.sh $API_TOKEN $PROJ_TEST_ID ./tests/fail.json)
+    _=$(./tests/commit.sh "$API_TOKEN" $PROJ_TEST_ID ./tests/fail.json)
 
     echo -e "\nFirst trigger call (expected to fail, just to get a pipeline id) ..."
     res=$(
-      trigger -a $API_TOKEN -p $PROJ_TEST_PIPELINE_TOKEN -t $REF $PROJ_TEST_ID || echo -e "\nfailed as expected"
+      trigger -a "$API_TOKEN" -p "$PROJ_TEST_PIPELINE_TOKEN" -t $REF $PROJ_TEST_ID || echo -e "\nfailed as expected"
     )
     echo -e "\nFirst trigger done:\n$res"
     
@@ -139,10 +139,10 @@ test issue 14:
     echo "$res" | grep "failed as expected$" > /dev/null 2&>1
 
     echo -e "\nPushing succeeding commit ..."
-    _=$(./tests/commit.sh $API_TOKEN $PROJ_TEST_ID ./tests/succeed.json)
+    _=$(./tests/commit.sh "$API_TOKEN" $PROJ_TEST_ID ./tests/succeed.json)
 
     echo -e "\nSecond trigger call, now with -f flag (expected to retry new pipeline and succeed) ..."
-    trigger -a $API_TOKEN -p $PROJ_TEST_PIPELINE_TOKEN -t $REF --pid $pid $PROJ_TEST_ID
+    trigger -a "$API_TOKEN" -p "$PROJ_TEST_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_TEST_ID
 
 
 .release_template: &release_template
