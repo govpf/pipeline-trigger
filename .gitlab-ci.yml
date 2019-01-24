@@ -112,7 +112,7 @@ test manual:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual $PROJ_B_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual play $PROJ_B_ID
 
 
 test issue 14:
