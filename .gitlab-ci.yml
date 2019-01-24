@@ -108,7 +108,14 @@ test retry pid:
     trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_B_ID
 
 
-test manual:
+test manual pass:
+  stage: test
+  image: $IMAGE
+  script: 
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual pass $PROJ_B_ID
+
+
+test manual play:
   stage: test
   image: $IMAGE
   script: 
