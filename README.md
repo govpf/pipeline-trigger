@@ -29,7 +29,7 @@ variables:
   # set via secret variables
   API_TOKEN: $PERSONAL_ACCESS_TOKEN
   PROJ_A_ID: $PROJ_A_ID
-  PROJ_A_PIPELINE_TOKEN: $PROJ_A_PIPELINE_TOKEN
+  PROJ_A_PIPELINE_TOKEN: "$PROJ_A_PIPELINE_TOKEN"
   PROJ_B_ID: $PROJ_B_ID
   PROJ_B_PIPELINE_TOKEN: $PROJ_B_PIPELINE_TOKEN
   TARGET_BRANCH: master
@@ -46,13 +46,13 @@ test proj a:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_A_PIPELINE_TOKEN" -t $TARGET_BRANCH $PROJ_A_ID
 
 test proj b:
   stage: test
   image: $IMAGE
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_B_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_B_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $TARGET_BRANCH $PROJ_B_ID
 
 release-tag:
   # details skipped
@@ -65,7 +65,7 @@ test proj a:
   stage: test_dev
   image: $PTRIGGER
   script: 
-    - trigger -a $API_TOKEN -p $PROJ_A_PIPELINE_TOKEN -t $TARGET_BRANCH $PROJ_A_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_A_PIPELINE_TOKEN" -t $TARGET_BRANCH $PROJ_A_ID
 ```
 
 This runs the `trigger` command which is part of the `pipeline-trigger` image with the specified parameters. This script will trigger the pipeline in the given project and then poll the pipeline status for its result. The exit code will be `0` in case of `success` and that way integate in your parent project's pipeline like any other build job - just that it's run on another project's pipeline.
@@ -109,6 +109,14 @@ trigger -h gitlab.com -u /api/v4/projects ...
 where `gitlab.com` and `/api/v4/projects` are also the default values used.
 
 Typically you will only need to override the `host` but `-u` to change the url path is there if you need it.
+
+## Triggering pipelines with manual stages
+
+Pipelines with manual stages are taken as `allow_failure = true` by default in Gitlab. When triggered by pipeline-trigger, these pipelines will be read as passed but will not play their action and therefore the progress of the remote pipeline will stop at the manual stage.
+
+By passing the flag `--on-manual play`, remote pipelines' actions will be played by pipeline-trigger. Please note that this flag will apply to all manual stages. You cannot play only certain manual stages at this time.
+
+If the manual pipeline is configured as `allow_failure = false` but you want to treat it as passed when triggering it without playing the action, use the flag `--on-manual pass`.
 
 ## Get in touch
 
