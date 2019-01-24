@@ -29,5 +29,5 @@ class Test(unittest.TestCase):
         assert args.pid == 123
 
     def test_parse_env(self):
-        envs = trigger.parse_env(['foo-1=bar2', 'foo2=bar3'])
-        assert envs == {'variables[foo-1]': 'bar2', 'variables[foo2]': 'bar3'}
+        envs = trigger.parse_env(['foo-1=bar2', 'foo2=bar3='])
+        assert envs == {'variables[foo-1]': 'bar2', 'variables[foo2]': 'bar3='}

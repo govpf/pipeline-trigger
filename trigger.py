@@ -61,7 +61,7 @@ def parse_args(args: List[str]):
 def parse_env(envs: List[str]) -> List[Dict]:
     res = {}
     for e in envs:
-        k, v = e.split('=')
+        k, v = e.split('=', 1)
         res[f'variables[{k}]'] = v
     return res
 
