@@ -110,6 +110,14 @@ where `gitlab.com` and `/api/v4/projects` are also the default values used.
 
 Typically you will only need to override the `host` but `-u` to change the url path is there if you need it.
 
+## Triggering pipelines with manual stages
+
+Pipelines with manual stages are taken as `allow_failure = true` by default in Gitlab. When triggered by pipeline-trigger, these pipelines will be read as passed but will not play their action and therefore the progress of the remote pipeline will stop at the manual stage.
+
+By passing the flag `--on-manual play`, remote pipelines' actions will be played by pipeline-trigger. Please note that this flag will apply to all manual stages. You cannot play only certain manual stages at this time.
+
+If the manual pipeline is configured as `allow_failure = false` but you want to treat it as passed when triggering it without playing the action, use the flag `--on-manual pass`.
+
 ## Get in touch
 
 - https://finestructure.co
