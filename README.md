@@ -108,6 +108,12 @@ trigger -h gitlab.com -u /api/v4/projects ...
 
 where `gitlab.com` and `/api/v4/projects` are also the default values used.
 
+If you're self-hosting gitlab use a SelfSigned SSL certificate you can use the `-v` flag as follows:
+
+```
+trigger -h gitlab.com -u /api/v4/projects -v false ...
+```
+
 Typically you will only need to override the `host` but `-u` to change the url path is there if you need it.
 
 ## Triggering pipelines with manual stages
