@@ -151,6 +151,11 @@ test issue 14:
     echo -e "\nSecond trigger call, now with -f flag (expected to retry new pipeline and succeed) ..."
     trigger -a "$API_TOKEN" -p "$PROJ_TEST_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_TEST_ID
 
+test issue 20:
+  stage: test
+  image: $IMAGE
+  script: 
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -v 0 $PROJ_B_ID
 
 .release_template: &release_template
   stage: release
