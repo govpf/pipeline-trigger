@@ -37,13 +37,13 @@ class PipelineFailure(Exception):
 
 
 @lru_cache(maxsize=None)
-def get_gitlab(url, api_token):
-    return gitlab.Gitlab(url, private_token=api_token)
+def get_gitlab(url, api_token, verifyssl):
+    return gitlab.Gitlab(url, private_token=api_token, ssl_verify=verifyssl)
 
 
 @lru_cache(maxsize=None)
-def get_project(url, api_token, proj_id):
-    return get_gitlab(url, api_token).projects.get(proj_id)
+def get_project(url, api_token, proj_id, verifyssl):
+    return get_gitlab(url, api_token, verifyssl).projects.get(proj_id)
 
 
 def parse_args(args: List[str]):
@@ -226,14 +226,14 @@ def trigger(args: List[str]) -> int:
             pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables)
         else:
             print(f"Retrying pipeline {pid} ...")
-            proj = get_project(base_url, args.api_token, proj_id)
+            proj = get_project(base_url, args.api_token, proj_id, verifyssl)
             proj.pipelines.get(pid).retry()
 
     else:
         print(f"Triggering pipeline for ref '{ref}' for project id {proj_id}")
         pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables)
         try:
-            proj = get_project(base_url, args.api_token, proj_id)
+            proj = get_project(base_url, args.api_token, proj_id, verifyssl)
             print(f"See pipeline at {proj.web_url}/pipelines/{pid}")
         except Exception:
             # get_projects can fail if no api_token has been provided
@@ -258,7 +258,7 @@ def trigger(args: List[str]) -> int:
 
     while status not in finished_states:
         try:
-            proj = get_project(base_url, api_token, proj_id)
+            proj = get_project(base_url, api_token, proj_id, verifyssl)
             pipeline = proj.pipelines.get(pid)
             status = pipeline.status
             if status == STATUS_MANUAL and args.on_manual == ACTION_PLAY:
