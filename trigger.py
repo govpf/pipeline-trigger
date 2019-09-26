@@ -66,18 +66,22 @@ def parse_args(args: List[str]):
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
     parser.add_argument('-v', '--verifyssl', type=str2bool, default=True, help='Activate the ssl verification, set false for Self-signed certificate')
     parser.add_argument('--on-manual', default=ACTION_FAIL, choices=[ACTION_FAIL, ACTION_PASS, ACTION_PLAY], help='action if "manual" status occurs')
+    parser.add_argument('--jobs', help='comma-separated list of manual jobs to run on `--on-manual play`')
     parser.add_argument('project_id')
-    return parser.parse_args(args)
+    parsed_args = parser.parse_args(args)
+    return parsed_args
+
 
 def str2bool(v):
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
 
 def parse_env(envs: List[str]) -> List[Dict]:
     res = {}
@@ -261,19 +265,28 @@ def trigger(args: List[str]) -> int:
             proj = get_project(base_url, api_token, proj_id, verifyssl)
             pipeline = proj.pipelines.get(pid)
             status = pipeline.status
-            if status == STATUS_MANUAL and args.on_manual == ACTION_PLAY:
-                manual_job = None
+            if status in [STATUS_MANUAL, STATUS_SKIPPED] and args.on_manual == ACTION_PLAY:
+                defined_jobs = [item for item in args.jobs.split(',')]
+                manual_jobs = []
                 for job in pipeline.jobs.list():
                     if job.status == STATUS_MANUAL:
-                        manual_job = job
-                        break
-                if manual_job is None:
+                        # pick the first manual job and exit the loop
+                        if len(defined_jobs) == 0:
+                            manual_jobs.append(job)
+                            break
+                        elif job.name in defined_jobs:
+                            manual_jobs.append(job)
+
+                if len(manual_jobs) == 0:
                     print('\nNo manual jobs found!')
                 else:
                     # wipe status, because the pipeline will continue after playing the manual job
                     status = None
-                    print(f'\nPlaying manual job "{manual_job.name}" from stage "{manual_job.stage}"...')
-                    proj.jobs.get(manual_job.id, lazy=True).play()
+                    # sort by name of --jobs argument to preserve the order of execution
+                    manual_jobs.sort(key=lambda j: defined_jobs.index(j.name))
+                    for manual_job in manual_jobs:
+                        print(f'\nPlaying manual job "{manual_job.name}" from stage "{manual_job.stage}"...')
+                        proj.jobs.get(manual_job.id, lazy=True).play()
 
             # reset retries_left if the status call succeeded (fail only on consecutive failures)
             retries_left = max_retries
