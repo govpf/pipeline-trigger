@@ -183,7 +183,7 @@ issue 20 integration test:
   # test for https://gitlab.com/finestructure/pipeline-trigger/issues/20
   extends: .integration-test-template
   script:
-    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -v 0 $PROJ_B_ID
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF --verifyssl false $PROJ_B_ID
 
 
 .release_template: &release_template
