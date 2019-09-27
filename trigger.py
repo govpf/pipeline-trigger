@@ -197,7 +197,7 @@ def isint(x):
     except ValueError:
         return False
     else:
-        return x == y
+        return True
 
 
 def trigger(args: List[str]) -> int:

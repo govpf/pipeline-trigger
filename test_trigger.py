@@ -222,6 +222,6 @@ Pipeline failed! Check details at 'https://example.com/project1'"""
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
-..9
+..
 Pipeline succeeded"""
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
