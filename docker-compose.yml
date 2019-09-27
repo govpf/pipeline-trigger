@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  trigger:
+    image: ${CI_REGISTRY_IMAGE:-pipeline-trigger}:${CI_COMMIT_SHA:-local}
+    build:
+      context: .

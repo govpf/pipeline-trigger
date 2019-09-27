@@ -1,0 +1,7 @@
+[report]
+
+[run]
+omit =
+    test_trigger.py
+include =
+    trigger.py

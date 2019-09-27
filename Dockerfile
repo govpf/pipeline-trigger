@@ -1,6 +1,7 @@
 FROM python:3.6.5-alpine
 
-RUN pip install python-gitlab==1.6.0
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 # disable warnings when not verifying SSL certificate
 ENV PYTHONWARNINGS="ignore:Unverified HTTPS request"
