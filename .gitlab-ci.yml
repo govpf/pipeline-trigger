@@ -29,38 +29,61 @@ build-sha:
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
 
-
-test basic:
+unit-test:
   stage: test
   image: $IMAGE
-  script: 
+  script:
+    - coverage run -m unittest test_trigger.py
+    - coverage report --fail-under 100 trigger.py
+    - coverage html
+  artifacts:
+    paths:
+      - htmlcov
+    expire_in: 1 week
+
+pages:
+  stage: release
+  only:
+    - master
+  dependencies:
+    - unit-test
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 year
+  script:
+    - mv htmlcov/ public/
+
+integration-test-basic:
+  stage: test
+  image: $IMAGE9
+  script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
-
-test env variables & job output:
+integration-test-env-variables-and-job-output:
   stage: test
   image: $IMAGE
-  script: 
+  script:
     - trigger -a "$API_TOKEN" -p "$PROJ_A_PIPELINE_TOKEN" -t $REF -e foo1=bar2 -e foo2=bar3 -o $PROJ_A_ID
 
 
-test host & url:
+integration-test-host-and-url:
   stage: test
   image: $IMAGE
-  script: 
+  script:
     # test both with and without protocol prefix
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -h gitlab.com -u /api/v4/projects $PROJ_B_ID
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -h https://gitlab.com -u /api/v4/projects $PROJ_B_ID
 
 
-test detach:
+integration-test-detach:
   stage: test
   image: $IMAGE
   script:
     - trigger -d -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
 
-test retry:
+integration-test-retry:
   stage: test
   image: $IMAGE
   script: |
@@ -83,7 +106,7 @@ test retry:
         exit 1
       fi
     done
-    
+
     echo
     echo "## Trying until we get first success"
     echo
@@ -100,7 +123,7 @@ test retry:
     done
 
 
-test retry pid:
+integration-test-retry-pid:
   stage: test
   image: $IMAGE
   script: |
@@ -108,21 +131,21 @@ test retry pid:
     trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_B_ID
 
 
-test manual pass:
+integration-test-pass:
   stage: test
   image: $IMAGE
-  script: 
+  script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual pass $PROJ_B_ID
 
 
-test manual play:
+integration-test-play:
   stage: test
   image: $IMAGE
-  script: 
+  script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual play $PROJ_B_ID
 
 
-test issue 14:
+integration-test-issue-14:
   stage: test
   image: $IMAGE
   script: |
@@ -137,7 +160,7 @@ test issue 14:
       trigger -a "$API_TOKEN" -p "$PROJ_TEST_PIPELINE_TOKEN" -t $REF $PROJ_TEST_ID || echo -e "\nfailed as expected"
     )
     echo -e "\nFirst trigger done:\n$res"
-    
+
     # could use something a bit more elegant than this
     pid=$(echo $res | python -c "import re, sys; print(re.match('.+ Waiting for pipeline (\d+) to finish .+', sys.stdin.read()).groups()[0])")
     echo -e "\nPID from first run: $pid"
@@ -151,10 +174,10 @@ test issue 14:
     echo -e "\nSecond trigger call, now with -f flag (expected to retry new pipeline and succeed) ..."
     trigger -a "$API_TOKEN" -p "$PROJ_TEST_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_TEST_ID
 
-test issue 20:
+integration-test-issue-20:
   stage: test
   image: $IMAGE
-  script: 
+  script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -v 0 $PROJ_B_ID
 
 .release_template: &release_template

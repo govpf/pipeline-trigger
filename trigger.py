@@ -266,7 +266,7 @@ def trigger(args: List[str]) -> int:
             pipeline = proj.pipelines.get(pid)
             status = pipeline.status
             if status in [STATUS_MANUAL, STATUS_SKIPPED] and args.on_manual == ACTION_PLAY:
-                defined_jobs = [item for item in args.jobs.split(',')]
+                defined_jobs = [item for item in args.jobs.split(',')] if args.jobs else []
                 manual_jobs = []
                 for job in pipeline.jobs.list():
                     if job.status == STATUS_MANUAL:
@@ -282,8 +282,9 @@ def trigger(args: List[str]) -> int:
                 else:
                     # wipe status, because the pipeline will continue after playing the manual job
                     status = None
-                    # sort by name of --jobs argument to preserve the order of execution
-                    manual_jobs.sort(key=lambda j: defined_jobs.index(j.name))
+                    if len(defined_jobs) > 0:
+                        # sort by name of --jobs argument to preserve the order of execution
+                        manual_jobs.sort(key=lambda j: defined_jobs.index(j.name))
                     for manual_job in manual_jobs:
                         print(f'\nPlaying manual job "{manual_job.name}" from stage "{manual_job.stage}"...')
                         proj.jobs.get(manual_job.id, lazy=True).play()
