@@ -29,12 +29,13 @@ build-sha:
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
 
+# Run UT on all branches/forks/everywhere, todo: increase --fail-under value in the future
 unit-test:
   stage: test
   image: $IMAGE
   script:
     - coverage run -m unittest test_trigger.py
-    - coverage report --fail-under 100 trigger.py
+    - coverage report --fail-under 62 trigger.py
     - coverage html
   artifacts:
     paths:
@@ -54,22 +55,27 @@ pages:
   script:
     - mv htmlcov/ public/
 
-integration-test-basic:
+# Run IT only on the main project with all necessary secrets configured
+.integration-test-template:
   stage: test
-  image: $IMAGE9
+  image: $IMAGE
+  only:
+    variables:
+      - $CI_PROJECT_PATH == "finestructure/pipeline-trigger"
+
+integration-test-basic:
+  extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
 integration-test-env-variables-and-job-output:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_A_PIPELINE_TOKEN" -t $REF -e foo1=bar2 -e foo2=bar3 -o $PROJ_A_ID
 
 
 integration-test-host-and-url:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script:
     # test both with and without protocol prefix
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -h gitlab.com -u /api/v4/projects $PROJ_B_ID
@@ -77,15 +83,13 @@ integration-test-host-and-url:
 
 
 integration-test-detach:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script:
     - trigger -d -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
 
 integration-test-retry:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script: |
     # https://gitlab.com/finestructure/pt-proj-retry.git is a project that randomly failes with a rate of 50%
     # In order to test retry behaviour, we run it until it fails and then run until it succeeds.
@@ -124,30 +128,26 @@ integration-test-retry:
 
 
 integration-test-retry-pid:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script: |
     pid=25900902  # known existing pipeline id in proj-b
     trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_B_ID
 
 
 integration-test-pass:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual pass $PROJ_B_ID
 
 
 integration-test-play:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual play $PROJ_B_ID
 
 
 integration-test-issue-14:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script: |
     # test for https://gitlab.com/finestructure/pipeline-trigger/issues/14
     apk add --no-cache curl
@@ -175,8 +175,7 @@ integration-test-issue-14:
     trigger -a "$API_TOKEN" -p "$PROJ_TEST_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_TEST_ID
 
 integration-test-issue-20:
-  stage: test
-  image: $IMAGE
+  extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -v 0 $PROJ_B_ID
 
