@@ -122,7 +122,7 @@ class TriggerTest(unittest.TestCase):
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
@@ -137,7 +137,7 @@ Pipeline succeeded"""
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
@@ -152,7 +152,7 @@ Pipeline succeeded"""
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2,manual1"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
@@ -172,7 +172,7 @@ Pipeline succeeded"""
 
         self.assertTrue(context.exception and context.exception.pipeline_id == '1')
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...

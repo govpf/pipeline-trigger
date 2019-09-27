@@ -36,7 +36,7 @@ unit tests:
   image: $IMAGE
   script:
     - coverage run -m unittest test_trigger.py
-    - coverage report --fail-under 62 trigger.py
+    - coverage report -m --fail-under 62 trigger.py
     - coverage html
   artifacts:
     paths:
@@ -46,7 +46,7 @@ unit tests:
 pages:
   stage: release
   only:
-    - master
+    - ${CI_GITLAB_PAGES_BRANCH:-master}
   dependencies:
     - unit tests
   artifacts:

@@ -1,4 +1,5 @@
-[![pipeline-status](https://gitlab.com/finestructure/pipeline-trigger/badges/master/build.svg)](https://gitlab.com/finestructure/pipeline-trigger/pipelines)
+[![pipeline status](https://gitlab.com/egordeev/pipeline-trigger/badges/master/pipeline.svg)](https://gitlab.com/egordeev/pipeline-trigger/commits/master)
+[![coverage report](https://gitlab.com/egordeev/pipeline-trigger/badges/master/coverage.svg)](https://gitlab.com/egordeev/pipeline-trigger/commits/master)
 [![Twitter](https://img.shields.io/badge/twitter-@__sa__s-blue.svg?logo=twitter)](https://twitter.com/_sa_s)
 
 # Pipeline-trigger
