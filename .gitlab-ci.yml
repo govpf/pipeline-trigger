@@ -48,7 +48,7 @@ pages:
   only:
     - master
   dependencies:
-    - unit-test
+    - unit tests
   artifacts:
     paths:
       - public
