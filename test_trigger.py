@@ -28,8 +28,7 @@ def some_manual_jobs(manual_pipeline):
     prop_name_2 = PropertyMock(return_value='manual2')
     job_2 = Mock(status=trigger.STATUS_MANUAL, stage='stage2')
     type(job_2).name = prop_name_2
-    manual_pipeline.jobs.list = MagicMock(return_value=
-    [
+    manual_pipeline.jobs.list = MagicMock(return_value=[
         Mock(status=trigger.STATUS_SKIPPED),
         job_1,
         job_2
