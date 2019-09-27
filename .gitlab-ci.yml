@@ -29,8 +29,9 @@ build-sha:
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
 
+
 # Run UT on all branches/forks/everywhere, todo: increase --fail-under value in the future
-unit-test:
+unit tests:
   stage: test
   image: $IMAGE
   script:
@@ -55,6 +56,7 @@ pages:
   script:
     - mv htmlcov/ public/
 
+
 # Run IT only on the main project with all necessary secrets configured
 .integration-test-template:
   stage: test
@@ -63,18 +65,20 @@ pages:
     variables:
       - $CI_PROJECT_PATH == "finestructure/pipeline-trigger"
 
-integration-test-basic:
+
+basic integration test:
   extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
-integration-test-env-variables-and-job-output:
+
+env variables & job output integration test:
   extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_A_PIPELINE_TOKEN" -t $REF -e foo1=bar2 -e foo2=bar3 -o $PROJ_A_ID
 
 
-integration-test-host-and-url:
+host & url integration test:
   extends: .integration-test-template
   script:
     # test both with and without protocol prefix
@@ -82,13 +86,13 @@ integration-test-host-and-url:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -h https://gitlab.com -u /api/v4/projects $PROJ_B_ID
 
 
-integration-test-detach:
+detch integration test:
   extends: .integration-test-template
   script:
     - trigger -d -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
 
-integration-test-retry:
+retry integration test:
   extends: .integration-test-template
   script: |
     # https://gitlab.com/finestructure/pt-proj-retry.git is a project that randomly failes with a rate of 50%
@@ -127,26 +131,26 @@ integration-test-retry:
     done
 
 
-integration-test-retry-pid:
+retry pid integration test:
   extends: .integration-test-template
   script: |
     pid=25900902  # known existing pipeline id in proj-b
     trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_B_ID
 
 
-integration-test-pass:
+manual pass integration test:
   extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual pass $PROJ_B_ID
 
 
-integration-test-play:
+manual play integration test:
   extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t manual --on-manual play $PROJ_B_ID
 
 
-integration-test-issue-14:
+issue 14 integration test:
   extends: .integration-test-template
   script: |
     # test for https://gitlab.com/finestructure/pipeline-trigger/issues/14
@@ -174,10 +178,13 @@ integration-test-issue-14:
     echo -e "\nSecond trigger call, now with -f flag (expected to retry new pipeline and succeed) ..."
     trigger -a "$API_TOKEN" -p "$PROJ_TEST_PIPELINE_TOKEN" -t $REF --pid $pid $PROJ_TEST_ID
 
-integration-test-issue-20:
+
+issue 20 integration test:
+  # test for https://gitlab.com/finestructure/pipeline-trigger/issues/20
   extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF -v 0 $PROJ_B_ID
+
 
 .release_template: &release_template
   stage: release
