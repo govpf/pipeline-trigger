@@ -46,7 +46,8 @@ unit tests:
 pages:
   stage: release
   only:
-    - ${CI_GITLAB_PAGES_BRANCH:-master}
+    - gitlab-pages
+    - master
   dependencies:
     - unit tests
   artifacts:
