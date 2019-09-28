@@ -105,7 +105,7 @@ Starting with pipeline-trigger `2.6.0` you can also pass in a project path inste
 trigger-downstream:
   #  # polyfill for a GitLab EE feature https://docs.gitlab.com/ee/ci/multi_project_pipelines.html
   #  trigger:
-  #    project: kubeservis/kubeservis-example-flask
+  #    project: finestructure/pt-proj-b
   #    branch: masters
   image: registry.gitlab.com/finestructure/pipeline-trigger:2.6.0
   script:
