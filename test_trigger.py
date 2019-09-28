@@ -45,6 +45,15 @@ def some_manual_pipeline_behavior(final_status):
     return pipeline_behavior
 
 
+def some_auto_pipeline_behavior(final_status):
+    pipeline_behavior = Mock()
+    pipeline_behavior.side_effect = [
+        Mock(status='running'),
+        Mock(status=final_status),
+    ]
+    return pipeline_behavior
+
+
 def some_invalid_manual_pipeline_behavior():
     pipeline_behavior = Mock()
     pipeline = Mock(status=trigger.STATUS_SKIPPED, web_url=f"https://{GITLAB_HOST}/project1")
@@ -62,18 +71,19 @@ def some_invalid_manual_pipeline_behavior():
 
 
 class TriggerTest(unittest.TestCase):
-    COMMON_ARGS = f"-h {GITLAB_HOST} -a api_token -p trigger_token --sleep 1 -t master 123"
+    COMMON_ARGS = f"-h {GITLAB_HOST} -a api_token -p trigger_token --sleep 1 -t master"
 
-    def run_trigger(self, cmd_args, mock_get_gitlab, behavior):
+    def run_trigger(self, cmd_args, mock_get_gitlab, behavior, add_extra_mocks=None):
         gitlab = some_gitlab(f"https://{GITLAB_HOST}", 'api_token', True, behavior)
         mock_get_gitlab.return_value = gitlab
         temp_stdout = StringIO()
         with contextlib.redirect_stdout(temp_stdout), requests_mock.Mocker() as m:
             m.post(f"https://{GITLAB_HOST}/api/v4/projects/123/trigger/pipeline", text='{"id": "1"}', status_code=201)
+            if add_extra_mocks:
+                add_extra_mocks(gitlab, m)
             trigger.get_gitlab.cache_clear()
             trigger.get_project.cache_clear()
             pid = trigger.trigger(cmd_args.split(' '))
-            assert m.called_once
             assert pid == '1'
         return temp_stdout
 
@@ -136,7 +146,7 @@ class TriggerTest(unittest.TestCase):
 
     @mock.patch('gitlab.Gitlab')
     def test_trigger_manual_play_no_jobs_specified(self, mock_get_gitlab):
-        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play"
+        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play 123"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
         expected_output = """Triggering pipeline for ref 'master' for project id 123
@@ -151,7 +161,7 @@ Pipeline succeeded"""
 
     @mock.patch('gitlab.Gitlab')
     def test_trigger_manual_play_one_job_specified(self, mock_get_gitlab):
-        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2"
+        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2 123"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
         expected_output = """Triggering pipeline for ref 'master' for project id 123
@@ -166,7 +176,7 @@ Pipeline succeeded"""
 
     @mock.patch('gitlab.Gitlab')
     def test_trigger_manual_play_two_jobs_specified(self, mock_get_gitlab):
-        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2,manual1"
+        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2,manual1 123"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
         expected_output = """Triggering pipeline for ref 'master' for project id 123
@@ -183,7 +193,7 @@ Pipeline succeeded"""
 
     @mock.patch('gitlab.Gitlab')
     def test_trigger_manual_play_no_manual_jobs_in_pipeline(self, mock_get_gitlab):
-        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play"
+        cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play 123"
 
         (context, temp_stdout) = self.run_trigger_with_error(cmd_args, mock_get_gitlab, some_invalid_manual_pipeline_behavior())
 
@@ -197,4 +207,21 @@ Waiting for pipeline 1 to finish ...
 No manual jobs found!
 .
 Pipeline failed! Check details at 'https://example.com/project1'"""
+        self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
+
+    @mock.patch('gitlab.Gitlab')
+    def test_trigger_with_project_name(self, mock_get_gitlab):
+        cmd_args = TriggerTest.COMMON_ARGS + " username/project_name"
+
+        def extra_mock(gitlab, mock_request):
+            mock_request.get(f"https://{GITLAB_HOST}/api/v4/projects/username%2Fproject_name", text='{"id": "123"}', status_code=200)
+
+        temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_auto_pipeline_behavior(trigger.STATUS_SUCCESS), extra_mock)
+
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
+Pipeline created (id: 1)
+See pipeline at https://example.com/project1/pipelines/1
+Waiting for pipeline 1 to finish ...
+..
+Pipeline succeeded"""
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)

@@ -89,15 +89,30 @@ trigger ... -e foo=bar
 
 Sometimes the remote pipeline triggered via pipeline-trigger is complex and/or consists of long-running steps. Because pipeline-trigger by default simply triggers a new remote pipeline (like you would in the pipeline UI), having to re-run a full pipeline just because one stage failed can be annoying.
 
-Starting with pipeline-trigger 2.0.0 it is possible to retry the remote pipeline via the `--retry` (or `-r`) parameter.
+Starting with pipeline-trigger `2.0.0` it is possible to retry the remote pipeline via the `--retry` (or `-r`) parameter.
 
 Pipeline-trigger will look for the last pipeline that has been run for the given `ref` and inspect its status. If the pipeline was successful, it will create a new pipeline for the `ref`. If it had another status it will retry the pipeline.
 
 The reason `-r` will create a new pipeline successful pipelines is to allow you to configure your pipelines with `-r` in general. If pipeline-trigger did not create new pipelines in case of success you would not be able to trigger further pipelines once a `ref`'s pipeline has succeeded.
 
-Starting with pipeline-trigger 2.1.0 you can also pass in a pipeline id to be retried specifically using the `--pid` parameter. This is useful if you have kept ids around for retries and want to avoid having pipeline-trigger perform lookups. Note that `--pid` implies `-r`.
+Starting with pipeline-trigger `2.1.0` you can also pass in a pipeline id to be retried specifically using the `--pid` parameter. This is useful if you have kept ids around for retries and want to avoid having pipeline-trigger perform lookups. Note that `--pid` implies `-r`.
 
 Other than using the provided pipeline id instead of looking up the latest pipeline for a given reference, pipeline-trigger behaves the same as for retries without the `--pid` parameter. Notably, if the pipeline for the given pipeline id was already in `success` state, a new pipeline will be created.
+
+Starting with pipeline-trigger `2.6.0` you can also pass in a project path instead of project id, e.g. `finestructure/pipeline-trigger`:
+
+```
+trigger-downstream:
+  #  # polyfill for a GitLab EE feature https://docs.gitlab.com/ee/ci/multi_project_pipelines.html
+  #  trigger:
+  #    project: finestructure/pt-proj-b
+  #    branch: masters
+  image: registry.gitlab.com/finestructure/pipeline-trigger:2.6.0
+  script:
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t master finestructure/pt-proj-b
+
+```
+
 
 ## Self-hosted domains
 

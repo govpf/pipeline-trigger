@@ -3,6 +3,7 @@
 
 import argparse
 import sys
+import urllib.parse
 from functools import lru_cache
 from time import sleep
 from typing import Dict, List, Optional
@@ -176,6 +177,29 @@ def get_sha(project_url, api_token, ref, verifyssl) -> Optional[str]:
     return r.json().get('id')
 
 
+def get_project_id(project_url, api_token, project_name, verifyssl):
+    assert project_name is not None, 'expected TRIGGER_PROJECT_NAME defined'
+    r = requests.get(
+        f"{project_url}/{urllib.parse.quote(project_name, safe='')}",
+        headers={
+            'PRIVATE-TOKEN': api_token
+        },
+        verify=verifyssl
+    )
+    assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
+    res = r.json()
+    return str(res['id'])
+
+
+def isint(x):
+    try:
+        y = int(x)
+    except ValueError:
+        return False
+    else:
+        return True
+
+
 def trigger(args: List[str]) -> int:
     args = parse_args(args)
 
@@ -189,12 +213,18 @@ def trigger(args: List[str]) -> int:
     ref = args.target_ref
     proj_id = args.project_id
     pipeline_token = args.pipeline_token
+    verifyssl = args.verifyssl
+
     if args.host.startswith('http://') or args.host.startswith('https://'):
         base_url = args.host
     else:
         base_url = f'https://{args.host}'
+
+    if not isint(proj_id):
+        assert args.api_token is not None, 'finding project id by name requires an api token (-a parameter missing)'
+        proj_id = get_project_id(f"{base_url}{args.url_path}", args.api_token, proj_id, verifyssl)
+
     project_url = f"{base_url}{args.url_path}/{proj_id}"
-    verifyssl = args.verifyssl
     variables = {}
     if args.env is not None:
         variables = parse_env(args.env)

@@ -36,7 +36,7 @@ unit tests:
   image: $IMAGE
   script:
     - coverage run -m unittest test_trigger.py
-    - coverage report -m --fail-under 65 trigger.py
+    - coverage report -m --fail-under 67 trigger.py
     - coverage html
   artifacts:
     paths:
@@ -46,7 +46,6 @@ unit tests:
 pages:
   stage: release
   only:
-    - gitlab-pages
     - master
   dependencies:
     - unit tests
@@ -71,6 +70,15 @@ basic integration test:
   extends: .integration-test-template
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
+
+project name integration test:
+  #  # polyfill for a GitLab EE feature https://docs.gitlab.com/ee/ci/multi_project_pipelines.html
+  #  trigger:
+  #    project: finestructure/pt-proj-b
+  #    branch: master
+  extends: .integration-test-template
+  script:
+    - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t master finestructure/pt-proj-b
 
 
 env variables & job output integration test:
