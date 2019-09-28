@@ -4,7 +4,6 @@ from io import StringIO
 from unittest import mock
 from unittest.mock import MagicMock, Mock, PropertyMock
 
-import pytest
 import requests_mock
 
 import trigger
@@ -89,7 +88,7 @@ class TriggerTest(unittest.TestCase):
             pid = trigger.trigger(cmd_args.split(' '))
             assert m.called_once
             assert pid == '1'
-        return (context, temp_stdout)
+        return context, temp_stdout
 
     def test_args_1(self):
         args = trigger.parse_args('-p ptok -t ref -e foo-1=bar2 -e foo2=bar3 proj'.split())
@@ -98,9 +97,12 @@ class TriggerTest(unittest.TestCase):
         assert args.env == ['foo-1=bar2', 'foo2=bar3']
         assert args.project_id == 'proj'
 
-    def test_args_2(self):
-        with pytest.raises(SystemExit):
+    def test_args_required(self):
+        temp_stderr = StringIO()
+        with contextlib.redirect_stderr(temp_stderr), self.assertRaises(SystemExit) as context:
             trigger.parse_args('-a foo -e foo1=bar2 foo2=bar3 dangling'.split())
+        assert context.exception and isinstance(context.exception, SystemExit) and context.exception.code == 2
+        assert 'the following arguments are required: -p/--pipeline-token, -t/--target-ref' in temp_stderr.getvalue().strip()
 
     def test_parse_args_retry(self):
         args = trigger.parse_args('-a foo -p bar -t ref proj'.split())
@@ -117,12 +119,27 @@ class TriggerTest(unittest.TestCase):
         envs = trigger.parse_env(['foo-1=bar2', 'foo2=bar3='])
         assert envs == {'variables[foo-1]': 'bar2', 'variables[foo2]': 'bar3='}
 
+    def test_args_verify_ssl(self):
+        args = trigger.parse_args("-p tok -t ref --verifyssl false 123".split())
+        assert not args.verifyssl
+
+    def test_args_verify_ssl_short(self):
+        args = trigger.parse_args("-p tok -t ref -v true 123".split())
+        assert args.verifyssl
+
+    def test_args_verify_ssl_invalid(self):
+        temp_stderr = StringIO()
+        with contextlib.redirect_stderr(temp_stderr), self.assertRaises(SystemExit) as context:
+            trigger.parse_args("-p tok -t ref -v some_value 123".split())
+        assert context.exception and isinstance(context.exception, SystemExit) and context.exception.code == 2
+        assert 'argument -v/--verifyssl: Boolean value expected' in temp_stderr.getvalue().strip()
+
     @mock.patch('gitlab.Gitlab')
     def test_trigger_manual_play_no_jobs_specified(self, mock_get_gitlab):
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
@@ -137,7 +154,7 @@ Pipeline succeeded"""
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
@@ -152,7 +169,7 @@ Pipeline succeeded"""
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2,manual1"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
@@ -172,7 +189,7 @@ Pipeline succeeded"""
 
         self.assertTrue(context.exception and context.exception.pipeline_id == '1')
 
-        expected_output = """Triggering pipeline for ref \'master\' for project id 123
+        expected_output = """Triggering pipeline for ref 'master' for project id 123
 Pipeline created (id: 1)
 See pipeline at https://example.com/project1/pipelines/1
 Waiting for pipeline 1 to finish ...
