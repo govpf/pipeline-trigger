@@ -46,7 +46,6 @@ unit tests:
 pages:
   stage: release
   only:
-    - gitlab-pages
     - master
   dependencies:
     - unit tests
