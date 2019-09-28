@@ -71,7 +71,7 @@ basic integration test:
   script:
     - trigger -a "$API_TOKEN" -p "$PROJ_B_PIPELINE_TOKEN" -t $REF $PROJ_B_ID
 
-basic IT - project name:
+project name integration test:
   #  # polyfill for a GitLab EE feature https://docs.gitlab.com/ee/ci/multi_project_pipelines.html
   #  trigger:
   #    project: finestructure/pt-proj-b
