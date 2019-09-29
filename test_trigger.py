@@ -151,14 +151,16 @@ class TriggerTest(unittest.TestCase):
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play 123"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref 'master' for project id 123
-Pipeline created (id: 1)
-See pipeline at https://example.com/project1/pipelines/1
-Waiting for pipeline 1 to finish ...
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+            Waiting for pipeline 1 to finish ...
 
-Playing manual job "manual1" from stage "stage1"...
-...
-Pipeline succeeded"""
+            Playing manual job "manual1" from stage "stage1"...
+            ...
+            Pipeline succeeded
+        """)
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
     @mock.patch('gitlab.Gitlab')
@@ -166,14 +168,16 @@ Pipeline succeeded"""
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2 123"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref 'master' for project id 123
-Pipeline created (id: 1)
-See pipeline at https://example.com/project1/pipelines/1
-Waiting for pipeline 1 to finish ...
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+            Waiting for pipeline 1 to finish ...
 
-Playing manual job "manual2" from stage "stage2"...
-...
-Pipeline succeeded"""
+            Playing manual job "manual2" from stage "stage2"...
+            ...
+            Pipeline succeeded
+        """)
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
     @mock.patch('gitlab.Gitlab')
@@ -181,16 +185,18 @@ Pipeline succeeded"""
         cmd_args = TriggerTest.COMMON_ARGS + " --on-manual play --jobs manual2,manual1 123"
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_manual_pipeline_behavior(trigger.STATUS_SUCCESS))
 
-        expected_output = """Triggering pipeline for ref 'master' for project id 123
-Pipeline created (id: 1)
-See pipeline at https://example.com/project1/pipelines/1
-Waiting for pipeline 1 to finish ...
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+            Waiting for pipeline 1 to finish ...
 
-Playing manual job "manual2" from stage "stage2"...
+            Playing manual job "manual2" from stage "stage2"...
 
-Playing manual job "manual1" from stage "stage1"...
-...
-Pipeline succeeded"""
+            Playing manual job "manual1" from stage "stage1"...
+            ...
+            Pipeline succeeded
+        """)
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
     @mock.patch('gitlab.Gitlab')
@@ -201,14 +207,16 @@ Pipeline succeeded"""
 
         self.assertTrue(context.exception and context.exception.pipeline_id == '1')
 
-        expected_output = """Triggering pipeline for ref 'master' for project id 123
-Pipeline created (id: 1)
-See pipeline at https://example.com/project1/pipelines/1
-Waiting for pipeline 1 to finish ...
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+            Waiting for pipeline 1 to finish ...
 
-No manual jobs found!
-.
-Pipeline failed! Check details at 'https://example.com/project1'"""
+            No manual jobs found!
+            .
+            Pipeline failed! Check details at 'https://example.com/project1'
+        """)
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
     @mock.patch('gitlab.Gitlab')
@@ -220,12 +228,14 @@ Pipeline failed! Check details at 'https://example.com/project1'"""
 
         temp_stdout = self.run_trigger(cmd_args, mock_get_gitlab, some_auto_pipeline_behavior(trigger.STATUS_SUCCESS), [extra_mock])
 
-        expected_output = """Triggering pipeline for ref 'master' for project id 123
-Pipeline created (id: 1)
-See pipeline at https://example.com/project1/pipelines/1
-Waiting for pipeline 1 to finish ...
-..
-Pipeline succeeded"""
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+            Waiting for pipeline 1 to finish ...
+            ..
+            Pipeline succeeded
+        """)
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
     @mock.patch('gitlab.Gitlab')
