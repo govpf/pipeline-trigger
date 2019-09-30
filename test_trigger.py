@@ -108,6 +108,22 @@ class TriggerTest(unittest.TestCase):
         assert not trigger.isint('something')
         assert not trigger.isint(None)
 
+    def test_str2bool(self):
+        assert trigger.str2bool(True)
+        assert trigger.str2bool('True')
+        assert trigger.str2bool('TRUE')
+        assert trigger.str2bool('true')
+        assert trigger.str2bool('t')
+        assert trigger.str2bool('y')
+        assert trigger.str2bool('1')
+        assert not trigger.str2bool(False)
+        assert not trigger.str2bool('False')
+        assert not trigger.str2bool('FALSE')
+        assert not trigger.str2bool('false')
+        assert not trigger.str2bool('f')
+        assert not trigger.str2bool('n')
+        assert not trigger.str2bool('0')
+
     def test_args_1(self):
         args = trigger.parse_args('-p ptok -t ref -e foo-1=bar2 -e foo2=bar3 proj'.split())
         assert args.pipeline_token == 'ptok'
