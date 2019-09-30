@@ -193,7 +193,7 @@ def get_project_id(project_url, api_token, project_name, verifyssl):
 
 def isint(x):
     try:
-        y = int(x)
+        int(x)
     except ValueError:
         return False
     else:
