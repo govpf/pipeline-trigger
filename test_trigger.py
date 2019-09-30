@@ -102,6 +102,12 @@ class TriggerTest(unittest.TestCase):
             assert pid == '1'
         return context, temp_stdout
 
+    def test_isint(self):
+        assert trigger.isint(42)
+        assert trigger.isint('42')
+        assert not trigger.isint('something')
+        assert not trigger.isint(None)
+
     def test_args_1(self):
         args = trigger.parse_args('-p ptok -t ref -e foo-1=bar2 -e foo2=bar3 proj'.split())
         assert args.pipeline_token == 'ptok'
