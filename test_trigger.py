@@ -341,7 +341,8 @@ class TriggerTest(unittest.TestCase):
         """
         Tests retrying a failed pipeline
         """
-        cmd_args = TriggerTest.COMMON_ARGS + " --retry 123"
+        project_id = 123
+        cmd_args = TriggerTest.COMMON_ARGS + f" --retry {project_id}"
 
         temp_stdout = self.run_trigger(
             cmd_args,
@@ -349,9 +350,10 @@ class TriggerTest(unittest.TestCase):
             some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
             [
                 mock_get_last_pipeline(
+                    project_id,
                     [dict(id=1, status='failed', sha='deadbeef')]
                 ),
-                mock_get_sha(dict(id='deadbeef'))
+                mock_get_sha(project_id, dict(id='deadbeef'))
             ],
         )
 
@@ -374,7 +376,8 @@ class TriggerTest(unittest.TestCase):
         the sha the pipeline was run with). We'll want to create a new
         pipeline in this case.
         """
-        cmd_args = TriggerTest.COMMON_ARGS + " --retry 123"
+        project_id = 123
+        cmd_args = TriggerTest.COMMON_ARGS + f" --retry {project_id}"
 
         temp_stdout = self.run_trigger(
             cmd_args,
@@ -382,9 +385,10 @@ class TriggerTest(unittest.TestCase):
             some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
             [
                 mock_get_last_pipeline(
+                    project_id,
                     [dict(id=1, status='failed', sha='deadbeef')]
                 ),
-                mock_get_sha(dict(id='newrevision'))
+                mock_get_sha(project_id, dict(id='newrevision'))
             ],
         )
 
@@ -407,7 +411,8 @@ class TriggerTest(unittest.TestCase):
         pipeline in this case. (Otherwise, once successful, jobs configured
         with --retry would never be able to re-run pipelines.)
         """
-        cmd_args = TriggerTest.COMMON_ARGS + " --retry 123"
+        project_id = 123
+        cmd_args = TriggerTest.COMMON_ARGS + f" --retry {project_id}"
 
         temp_stdout = self.run_trigger(
             cmd_args,
@@ -415,9 +420,10 @@ class TriggerTest(unittest.TestCase):
             some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
             [
                 mock_get_last_pipeline(
+                    project_id,
                     [dict(id=1, status='success', sha='deadbeef')]
                 ),
-                mock_get_sha(dict(id='deadbeef'))
+                mock_get_sha(project_id, dict(id='deadbeef'))
             ],
         )
 
@@ -448,9 +454,10 @@ class TriggerTest(unittest.TestCase):
             some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
             [
                 mock_get_last_pipeline(
+                    proj_id,
                     [dict(id=1, status='success', sha='deadbeef')]
                 ),
-                mock_get_sha(dict(id='deadbeef')),
+                mock_get_sha(proj_id, dict(id='deadbeef')),
                 mock_get_pipeline(
                     proj_id,
                     pipeline_id,
@@ -471,20 +478,20 @@ class TriggerTest(unittest.TestCase):
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
 
-def mock_get_last_pipeline(response: dict, status_code: int = 200):
+def mock_get_last_pipeline(project_id: int, response: dict, status_code: int = 200):
     def req_mock(gitlab, mock_request):
         mock_request.get(
-            f"https://{GITLAB_HOST}/api/v4/projects/123/pipelines?ref=master&order_by=id&sort=desc",
+            f"https://{GITLAB_HOST}/api/v4/projects/{project_id}/pipelines?ref=master&order_by=id&sort=desc",
             text=json.dumps(response),
             status_code=status_code
         )
     return req_mock
 
 
-def mock_get_sha(response: dict, status_code: int = 200):
+def mock_get_sha(project_id: int, response: dict, status_code: int = 200):
     def req_mock(gitlab, mock_request):
         mock_request.get(
-            f"https://{GITLAB_HOST}/api/v4/projects/123/repository/commits/master",
+            f"https://{GITLAB_HOST}/api/v4/projects/{project_id}/repository/commits/master",
             text=json.dumps(response),
             status_code=status_code
         )
