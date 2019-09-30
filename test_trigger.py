@@ -337,7 +337,10 @@ class TriggerTest(unittest.TestCase):
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
     @mock.patch('gitlab.Gitlab')
-    def test_trigger_with_retry(self, mock_get_gitlab):
+    def test_trigger_with_retry_failed(self, mock_get_gitlab):
+        """
+        Tests retrying a failed pipeline
+        """
         cmd_args = TriggerTest.COMMON_ARGS + " --retry 123"
 
         temp_stdout = self.run_trigger(
@@ -358,6 +361,40 @@ class TriggerTest(unittest.TestCase):
             Retrying pipeline 1 ...
             Waiting for pipeline 1 to finish ...
             .
+            Pipeline succeeded
+        """)
+
+        self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
+
+    @mock.patch('gitlab.Gitlab')
+    def test_trigger_with_retry_outdated(self, mock_get_gitlab):
+        """
+        Tests retrying an outdated pipeline - we're retrying a pipeline
+        but the tip of the branch has a new revision (different from
+        the sha the pipeline was run with). We'll want to create a new
+        pipeline in this case.
+        """
+        cmd_args = TriggerTest.COMMON_ARGS + " --retry 123"
+
+        temp_stdout = self.run_trigger(
+            cmd_args,
+            mock_get_gitlab,
+            some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
+            [
+                mock_get_last_pipeline(
+                    [dict(id=1, status='failed', sha='deadbeef')]
+                ),
+                mock_get_sha(dict(id='newrevision'))
+            ],
+        )
+
+        expected_output = cleandoc("""
+            Looking for pipeline 'master' for project id 123 ...
+            Found outdated pipeline 1 with status 'failed'
+            Pipeline 1 for master outdated (sha: deadbe, tip is newrev) - re-running ...
+            Pipeline created (id: 1)
+            Waiting for pipeline 1 to finish ...
+            ..
             Pipeline succeeded
         """)
 
