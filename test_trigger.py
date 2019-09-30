@@ -400,6 +400,39 @@ class TriggerTest(unittest.TestCase):
 
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
+    @mock.patch('gitlab.Gitlab')
+    def test_trigger_with_retry_succeeded(self, mock_get_gitlab):
+        """
+        Tests retrying a successful pipeline. We'll want to create a new
+        pipeline in this case. (Otherwise, once successful, jobs configured
+        with --retry would never be able to re-run pipelines.)
+        """
+        cmd_args = TriggerTest.COMMON_ARGS + " --retry 123"
+
+        temp_stdout = self.run_trigger(
+            cmd_args,
+            mock_get_gitlab,
+            some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
+            [
+                mock_get_last_pipeline(
+                    [dict(id=1, status='success', sha='deadbeef')]
+                ),
+                mock_get_sha(dict(id='deadbeef'))
+            ],
+        )
+
+        expected_output = cleandoc("""
+            Looking for pipeline 'master' for project id 123 ...
+            Found up to date pipeline 1 with status 'success'
+            Pipeline 1 already in state 'success' - re-running ...
+            Pipeline created (id: 1)
+            Waiting for pipeline 1 to finish ...
+            ..
+            Pipeline succeeded
+        """)
+
+        self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
+
 
 def mock_get_last_pipeline(response: dict, status_code: int = 200):
     def req_mock(gitlab, mock_request):
