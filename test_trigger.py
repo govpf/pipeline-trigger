@@ -6,6 +6,7 @@ from io import StringIO
 from unittest import mock
 from unittest.mock import MagicMock, Mock, PropertyMock
 
+import pytest
 import requests_mock
 
 import trigger
@@ -160,6 +161,31 @@ class TriggerTest(unittest.TestCase):
     def test_args_verify_ssl_short(self):
         args = trigger.parse_args("-p tok -t ref -v true 123".split())
         assert args.verifyssl
+
+    @requests_mock.mock()
+    def test_get_pipeline(self, m):
+        # happy path
+        m.get(
+            f"https://xxx/pipelines/123",
+            text=json.dumps(dict(foo='bar'))
+        )
+        res = trigger.get_pipeline(
+            f'https://xxx',
+            api_token='ignored',
+            pid='123',
+            verifyssl=True)
+        assert res == dict(foo='bar')
+        # error path
+        m.get(
+            f"https://xxx/pipelines/123",
+            status_code=404)
+        with pytest.raises(AssertionError) as e:
+            res = trigger.get_pipeline(
+                f'https://xxx',
+                api_token='ignored',
+                pid='123',
+                verifyssl=True)
+            assert str(e) == 'AssertionError: expected status code 200, was 404'
 
     def test_args_verify_ssl_invalid(self):
         temp_stderr = StringIO()
