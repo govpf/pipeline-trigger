@@ -340,27 +340,16 @@ class TriggerTest(unittest.TestCase):
     def test_trigger_with_retry(self, mock_get_gitlab):
         cmd_args = TriggerTest.COMMON_ARGS + " --retry 123"
 
-        resp = [dict(id=1, status='failed', sha='deadbeef')]
-
-        def mock_get_last_pipeline(gitlab, mock_request):
-            mock_request.get(
-                f"https://{GITLAB_HOST}/api/v4/projects/123/pipelines?ref=master&order_by=id&sort=desc",
-                text=json.dumps(resp),
-                status_code=200
-            )
-
-        def mock_get_sha(gitlab, mock_request):
-            mock_request.get(
-                f"https://{GITLAB_HOST}/api/v4/projects/123/repository/commits/master",
-                text=json.dumps(dict(id='deadbeef')),
-                status_code=200
-            )
-
         temp_stdout = self.run_trigger(
             cmd_args,
             mock_get_gitlab,
             some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
-            [mock_get_last_pipeline, mock_get_sha],
+            [
+                mock_get_last_pipeline(
+                    [dict(id=1, status='failed', sha='deadbeef')]
+                ),
+                mock_get_sha(dict(id='deadbeef'))
+            ],
         )
 
         expected_output = cleandoc("""
@@ -373,3 +362,23 @@ class TriggerTest(unittest.TestCase):
         """)
 
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
+
+
+def mock_get_last_pipeline(response: dict, status_code: int = 200):
+    def req_mock(gitlab, mock_request):
+        mock_request.get(
+            f"https://{GITLAB_HOST}/api/v4/projects/123/pipelines?ref=master&order_by=id&sort=desc",
+            text=json.dumps(response),
+            status_code=status_code
+        )
+    return req_mock
+
+
+def mock_get_sha(response: dict, status_code: int = 200):
+    def req_mock(gitlab, mock_request):
+        mock_request.get(
+            f"https://{GITLAB_HOST}/api/v4/projects/123/repository/commits/master",
+            text=json.dumps(response),
+            status_code=status_code
+        )
+    return req_mock

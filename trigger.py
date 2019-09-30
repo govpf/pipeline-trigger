@@ -355,7 +355,7 @@ def trigger(args: List[str]) -> int:
         raise PipelineFailure(return_code=1, pipeline_id=pid)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: nocover
     try:
         trigger(sys.argv[1:])
         sys.exit(0)
