@@ -34,10 +34,10 @@ build-sha:
 unit tests:
   stage: test
   image: $IMAGE
-  script:
-    - coverage run -m unittest test_trigger.py
-    - coverage report -m --fail-under 67 trigger.py
-    - coverage html
+  script: |
+    coverage run -m unittest test_trigger.py
+    coverage report -m --fail-under 89 trigger.py
+    coverage html
   artifacts:
     paths:
       - htmlcov

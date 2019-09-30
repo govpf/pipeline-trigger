@@ -193,8 +193,8 @@ def get_project_id(project_url, api_token, project_name, verifyssl):
 
 def isint(x):
     try:
-        y = int(x)
-    except ValueError:
+        int(x)
+    except Exception:
         return False
     else:
         return True
@@ -355,7 +355,7 @@ def trigger(args: List[str]) -> int:
         raise PipelineFailure(return_code=1, pipeline_id=pid)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: nocover
     try:
         trigger(sys.argv[1:])
         sys.exit(0)
