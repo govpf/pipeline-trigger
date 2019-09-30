@@ -187,6 +187,31 @@ class TriggerTest(unittest.TestCase):
                 verifyssl=True)
             assert str(e) == 'AssertionError: expected status code 200, was 404'
 
+    @requests_mock.mock()
+    def test_get_pipeline_jobs(self, m):
+        # happy path
+        m.get(
+            f"https://xxx/pipelines/123/jobs",
+            text=json.dumps(dict(foo='bar'))
+        )
+        res = trigger.get_pipeline_jobs(
+            f'https://xxx',
+            api_token='ignored',
+            pipeline='123',
+            verifyssl=True)
+        assert res == dict(foo='bar')
+        # error path
+        m.get(
+            f"https://xxx/pipelines/123/jobs",
+            status_code=404)
+        with pytest.raises(AssertionError) as e:
+            res = trigger.get_pipeline_jobs(
+                f'https://xxx',
+                api_token='ignored',
+                pipeline='123',
+                verifyssl=True)
+            assert str(e) == 'AssertionError: expected status code 200, was 404'
+
     def test_args_verify_ssl_invalid(self):
         temp_stderr = StringIO()
         with contextlib.redirect_stderr(temp_stderr), self.assertRaises(SystemExit) as context:
