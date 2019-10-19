@@ -329,7 +329,7 @@ def trigger(args: List[str]) -> int:
     assert pid is not None, 'must have a valid pipeline id'
 
     if args.detached:
-        if args.on_manual == ACTION_PLAY: # detached for manual pipelines
+        if args.on_manual == ACTION_PLAY:  # detached for manual pipelines
             proj = get_project(base_url, args.api_token, proj_id, verifyssl)
             check_pipeline_status(args, pid, proj, project_url)
         print('Detached mode: not monitoring pipeline status - exiting now.')
@@ -342,6 +342,7 @@ def trigger(args: List[str]) -> int:
     print(f"Waiting for pipeline {pid} to finish ...")
 
     status = None
+    pipeline = None
     proj = get_project(base_url, api_token, proj_id, verifyssl)
 
     while status not in finished_states:
