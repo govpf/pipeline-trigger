@@ -477,6 +477,54 @@ class TriggerTest(unittest.TestCase):
 
         self.assertEqual(temp_stdout.getvalue().strip(), expected_output)
 
+    @mock.patch('gitlab.Gitlab')
+    def test_trigger_auto_detached(self, mock_get_gitlab):
+        """
+        Tests retrying a failed pipeline
+        """
+        project_id = 123
+        cmd_args = TriggerTest.COMMON_ARGS + f" --detached {project_id}"
+
+        temp_stdout = self.run_trigger(
+            cmd_args,
+            mock_get_gitlab,
+            some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
+        )
+
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+            Detached mode: not monitoring pipeline status - exiting now.
+        """)
+
+        self.assertEqual(expected_output, temp_stdout.getvalue().strip())
+
+    @mock.patch('gitlab.Gitlab')
+    def test_trigger_manual_detached(self, mock_get_gitlab):
+        """
+        Tests retrying a failed pipeline
+        """
+        project_id = 123
+        cmd_args = TriggerTest.COMMON_ARGS + f" --on-manual play --detached {project_id}"
+
+        temp_stdout = self.run_trigger(
+            cmd_args,
+            mock_get_gitlab,
+            some_manual_pipeline_behavior(trigger.STATUS_SUCCESS),
+        )
+
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+
+            Playing manual job "manual1" from stage "stage1"...
+            Detached mode: not monitoring pipeline status - exiting now.
+        """)
+
+        self.assertEqual(expected_output, temp_stdout.getvalue().strip())
+
 
 def mock_get_last_pipeline(project_id: int, response: dict, status_code: int = 200):
     def req_mock(gitlab, mock_request):
@@ -485,6 +533,7 @@ def mock_get_last_pipeline(project_id: int, response: dict, status_code: int = 2
             text=json.dumps(response),
             status_code=status_code
         )
+
     return req_mock
 
 
@@ -495,6 +544,7 @@ def mock_get_sha(project_id: int, response: dict, status_code: int = 200):
             text=json.dumps(response),
             status_code=status_code
         )
+
     return req_mock
 
 
@@ -505,4 +555,5 @@ def mock_get_pipeline(project_id: int, pipeline_id: int, response: dict, status_
             text=json.dumps(response),
             status_code=status_code
         )
+
     return req_mock
