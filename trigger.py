@@ -200,6 +200,58 @@ def isint(x):
         return True
 
 
+def handle_manual_pipeline(args, pipeline, proj, status):
+    defined_jobs = [item for item in args.jobs.split(',')] if args.jobs else []
+    manual_jobs = []
+    for job in pipeline.jobs.list():
+        if job.status == STATUS_MANUAL:
+            # pick the first manual job and exit the loop
+            if len(defined_jobs) == 0:
+                manual_jobs.append(job)
+                break
+            elif job.name in defined_jobs:
+                manual_jobs.append(job)
+    if len(manual_jobs) == 0:
+        print('\nNo manual jobs found!')
+    else:
+        # wipe status, because the pipeline will continue after playing the manual job
+        status = None
+        if len(defined_jobs) > 0:
+            # sort by name of --jobs argument to preserve the order of execution
+            manual_jobs.sort(key=lambda j: defined_jobs.index(j.name))
+        for manual_job in manual_jobs:
+            print(f'\nPlaying manual job "{manual_job.name}" from stage "{manual_job.stage}"...')
+            proj.jobs.get(manual_job.id, lazy=True).play()
+    return status
+
+
+def check_pipeline_status(args, pid, proj, project_url):
+    pipeline = None
+    status = None
+    max_retries = 5
+    retries_left = max_retries
+    while retries_left > -1:
+        try:
+            pipeline = proj.pipelines.get(pid)
+            status = pipeline.status
+            if status in [STATUS_MANUAL, STATUS_SKIPPED] and args.on_manual == ACTION_PLAY:
+                status = handle_manual_pipeline(args, pipeline, proj, status)
+
+            # reset retries_left if the status call succeeded (fail only on consecutive failures)
+            retries_left = max_retries
+            break
+        except Exception as e:
+            print(f'\nPolling for status failed: {e}')
+            if retries_left == 0:
+                print(f'Polling failed {max_retries} consecutive times. Please verify the pipeline url:')
+                print(f'   curl -s -X GET -H "PRIVATE-TOKEN: <private token>" {project_url}/pipelines/{pid}')
+                print('check your api token, or check if there are connection issues.')
+                print()
+                raise PipelineFailure(return_code=2, pipeline_id=pid)
+            retries_left -= 1
+    return pipeline, status
+
+
 def trigger(args: List[str]) -> int:
     args = parse_args(args)
 
@@ -277,6 +329,9 @@ def trigger(args: List[str]) -> int:
     assert pid is not None, 'must have a valid pipeline id'
 
     if args.detached:
+        if args.on_manual == ACTION_PLAY:  # detached for manual pipelines
+            proj = get_project(base_url, args.api_token, proj_id, verifyssl)
+            check_pipeline_status(args, pid, proj, project_url)
         print('Detached mode: not monitoring pipeline status - exiting now.')
         return pid
 
@@ -287,49 +342,11 @@ def trigger(args: List[str]) -> int:
     print(f"Waiting for pipeline {pid} to finish ...")
 
     status = None
-    max_retries = 5
-    retries_left = max_retries
+    pipeline = None
+    proj = get_project(base_url, api_token, proj_id, verifyssl)
 
     while status not in finished_states:
-        try:
-            proj = get_project(base_url, api_token, proj_id, verifyssl)
-            pipeline = proj.pipelines.get(pid)
-            status = pipeline.status
-            if status in [STATUS_MANUAL, STATUS_SKIPPED] and args.on_manual == ACTION_PLAY:
-                defined_jobs = [item for item in args.jobs.split(',')] if args.jobs else []
-                manual_jobs = []
-                for job in pipeline.jobs.list():
-                    if job.status == STATUS_MANUAL:
-                        # pick the first manual job and exit the loop
-                        if len(defined_jobs) == 0:
-                            manual_jobs.append(job)
-                            break
-                        elif job.name in defined_jobs:
-                            manual_jobs.append(job)
-
-                if len(manual_jobs) == 0:
-                    print('\nNo manual jobs found!')
-                else:
-                    # wipe status, because the pipeline will continue after playing the manual job
-                    status = None
-                    if len(defined_jobs) > 0:
-                        # sort by name of --jobs argument to preserve the order of execution
-                        manual_jobs.sort(key=lambda j: defined_jobs.index(j.name))
-                    for manual_job in manual_jobs:
-                        print(f'\nPlaying manual job "{manual_job.name}" from stage "{manual_job.stage}"...')
-                        proj.jobs.get(manual_job.id, lazy=True).play()
-
-            # reset retries_left if the status call succeeded (fail only on consecutive failures)
-            retries_left = max_retries
-        except Exception as e:
-            print(f'\nPolling for status failed: {e}')
-            if retries_left == 0:
-                print(f'Polling failed {max_retries} consecutive times. Please verify the pipeline url:')
-                print(f'   curl -s -X GET -H "PRIVATE-TOKEN: <private token>" {project_url}/pipelines/{pid}')
-                print('check your api token, or check if there are connection issues.')
-                print()
-                raise PipelineFailure(return_code=2, pipeline_id=pid)
-            retries_left -= 1
+        pipeline, status = check_pipeline_status(args, pid, proj, project_url)
 
         print('.', end='', flush=True)
         sleep(args.sleep)
