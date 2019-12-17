@@ -58,7 +58,9 @@ def parse_args(args: List[str]):
     parser.add_argument('-h', '--host', default='gitlab.com')
     parser.add_argument(
         '--help', action='help', help='show this help message and exit')
+    parser.add_argument('--jobs', help='comma-separated list of manual jobs to run on `--on-manual play`')
     parser.add_argument('-o', '--output', action='store_true', default=False, help='Show triggered pipline job output upon completion')
+    parser.add_argument('--on-manual', default=ACTION_FAIL, choices=[ACTION_FAIL, ACTION_PASS, ACTION_PLAY], help='action if "manual" status occurs')
     parser.add_argument('-p', '--pipeline-token', required=True, help='pipeline token')
     parser.add_argument('--pid', type=int, default=None, help='optional pipeline id of remote pipeline to be retried (implies -r)')
     parser.add_argument('-r', '--retry', action='store_true', default=False, help='retry latest pipeline for given TARGET_REF')
@@ -66,8 +68,7 @@ def parse_args(args: List[str]):
     parser.add_argument('-t', '--target-ref', required=True, help='target ref (branch, tag, commit)')
     parser.add_argument('-u', '--url-path', default='/api/v4/projects')
     parser.add_argument('-v', '--verifyssl', type=str2bool, default=True, help='Activate the ssl verification, set false for Self-signed certificate')
-    parser.add_argument('--on-manual', default=ACTION_FAIL, choices=[ACTION_FAIL, ACTION_PASS, ACTION_PLAY], help='action if "manual" status occurs')
-    parser.add_argument('--jobs', help='comma-separated list of manual jobs to run on `--on-manual play`')
+    parser.add_argument('--verbose', action='store_true', default=False, help='verbose logging of responses')
     parser.add_argument('project_id')
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -92,7 +93,7 @@ def parse_env(envs: List[str]) -> List[Dict]:
     return res
 
 
-def create_pipeline(project_url, pipeline_token, ref, verifyssl, variables={}) -> Optional[int]:
+def create_pipeline(project_url, pipeline_token, ref, verifyssl, variables={}, verbose=False) -> Optional[int]:
     data = variables.copy()
     data.update(token=pipeline_token, ref=ref)
     r = requests.post(
@@ -100,13 +101,15 @@ def create_pipeline(project_url, pipeline_token, ref, verifyssl, variables={}) -
         data=data,
         verify=verifyssl
     )
+    if verbose:
+        print(f'Response create_pipeline: {r.text}')
     assert r.status_code == 201, f'Failed to create pipeline, api returned status code {r.status_code}'
     pid = r.json().get('id', None)
     print(f'Pipeline created (id: {pid})')
     return pid
 
 
-def get_pipeline(project_url, api_token, pid, verifyssl):
+def get_pipeline(project_url, api_token, pid, verifyssl, verbose=False):
     r = requests.get(
         f'{project_url}/pipelines/{pid}',
         headers={
@@ -114,11 +117,13 @@ def get_pipeline(project_url, api_token, pid, verifyssl):
         },
         verify=verifyssl
     )
+    if verbose:
+        print(f'Response get_pipeline: {r.text}')
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     return r.json()
 
 
-def get_last_pipeline(project_url, api_token, ref, verifyssl):
+def get_last_pipeline(project_url, api_token, ref, verifyssl, verbose=False):
     r = requests.get(
         f'{project_url}/pipelines',
         headers={
@@ -131,13 +136,15 @@ def get_last_pipeline(project_url, api_token, ref, verifyssl):
         ),
         verify=verifyssl
     )
+    if verbose:
+        print(f'Response get_last_pipeline: {r.text}')
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     res = r.json()
     assert len(res) > 0, f'expected to find at least one pipeline for ref {ref}'
     return res[0]
 
 
-def get_pipeline_jobs(project_url, api_token, pipeline, verifyssl):
+def get_pipeline_jobs(project_url, api_token, pipeline, verifyssl, verbose=False):
     r = requests.get(
         f'{project_url}/pipelines/{pipeline}/jobs',
         headers={
@@ -145,12 +152,14 @@ def get_pipeline_jobs(project_url, api_token, pipeline, verifyssl):
         },
         verify=verifyssl
     )
+    if verbose:
+        print(f'Response get_pipeline_jobs: {r.text}')
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     res = r.json()
     return res
 
 
-def get_job_trace(project_url, api_token, job, verifyssl):
+def get_job_trace(project_url, api_token, job, verifyssl, verbose=False):
     r = requests.get(
         f'{project_url}/jobs/{job}/trace',
         headers={
@@ -158,12 +167,14 @@ def get_job_trace(project_url, api_token, job, verifyssl):
         },
         verify=verifyssl
     )
+    if verbose:
+        print(f'Response get_job_trace: {r.text}')
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     r.encoding = 'utf-8'
     return r.text
 
 
-def get_sha(project_url, api_token, ref, verifyssl) -> Optional[str]:
+def get_sha(project_url, api_token, ref, verifyssl, verbose=False) -> Optional[str]:
     """ Get the sha at the tip of ref
     """
     r = requests.get(
@@ -173,11 +184,13 @@ def get_sha(project_url, api_token, ref, verifyssl) -> Optional[str]:
         },
         verify=verifyssl
     )
+    if verbose:
+        print(f'Response get_sha: {r.text}')
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     return r.json().get('id')
 
 
-def get_project_id(project_url, api_token, project_name, verifyssl):
+def get_project_id(project_url, api_token, project_name, verifyssl, verbose=False):
     assert project_name is not None, 'expected TRIGGER_PROJECT_NAME defined'
     r = requests.get(
         f"{project_url}/{urllib.parse.quote(project_name, safe='')}",
@@ -186,6 +199,8 @@ def get_project_id(project_url, api_token, project_name, verifyssl):
         },
         verify=verifyssl
     )
+    if verbose:
+        print(f'Response get_project_id: {r.text}')
     assert r.status_code == 200, f'expected status code 200, was {r.status_code}'
     res = r.json()
     return str(res['id'])
@@ -230,7 +245,7 @@ def check_pipeline_status(args, pid, proj, project_url):
     status = None
     max_retries = 5
     retries_left = max_retries
-    while retries_left > -1:
+    while retries_left >= 0:
         try:
             pipeline = proj.pipelines.get(pid)
             status = pipeline.status
@@ -266,6 +281,7 @@ def trigger(args: List[str]) -> int:
     proj_id = args.project_id
     pipeline_token = args.pipeline_token
     verifyssl = args.verifyssl
+    verbose = args.verbose
 
     if args.host.startswith('http://') or args.host.startswith('https://'):
         base_url = args.host
@@ -274,7 +290,7 @@ def trigger(args: List[str]) -> int:
 
     if not isint(proj_id):
         assert args.api_token is not None, 'finding project id by name requires an api token (-a parameter missing)'
-        proj_id = get_project_id(f"{base_url}{args.url_path}", args.api_token, proj_id, verifyssl)
+        proj_id = get_project_id(f"{base_url}{args.url_path}", args.api_token, proj_id, verifyssl, verbose)
 
     project_url = f"{base_url}{args.url_path}/{proj_id}"
     variables = {}
@@ -286,19 +302,19 @@ def trigger(args: List[str]) -> int:
 
         if args.pid is None:
             print(f"Looking for pipeline '{ref}' for project id {proj_id} ...")
-            pipeline = get_last_pipeline(project_url, args.api_token, ref, verifyssl)
+            pipeline = get_last_pipeline(project_url, args.api_token, ref, verifyssl, verbose)
             pid = pipeline.get('id')
         else:
             pid = args.pid
             print(f"Fetching for pipeline '{pid}' for project id {proj_id} ...")
-            pipeline = get_pipeline(project_url, args.api_token, pid, verifyssl)
+            pipeline = get_pipeline(project_url, args.api_token, pid, verifyssl, verbose)
 
         status = pipeline.get('status')
         assert pid, 'refresh pipeline id must not be none'
         assert status, 'refresh pipeline status must not be none'
 
         pipeline_sha = pipeline.get('sha')
-        ref_tip_sha = get_sha(project_url, args.api_token, ref, verifyssl)
+        ref_tip_sha = get_sha(project_url, args.api_token, ref, verifyssl, verbose)
         outdated = pipeline_sha != ref_tip_sha
 
         outdated_str = 'outdated' if outdated else 'up to date'
@@ -306,10 +322,10 @@ def trigger(args: List[str]) -> int:
 
         if outdated:
             print(f"Pipeline {pid} for {ref} outdated (sha: {pipeline_sha[:6]}, tip is {ref_tip_sha[:6]}) - re-running ...")
-            pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables)
+            pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables, verbose)
         elif status == STATUS_SUCCESS:
             print(f"Pipeline {pid} already in state 'success' - re-running ...")
-            pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables)
+            pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables, verbose)
         else:
             print(f"Retrying pipeline {pid} ...")
             proj = get_project(base_url, args.api_token, proj_id, verifyssl)
@@ -317,7 +333,7 @@ def trigger(args: List[str]) -> int:
 
     else:
         print(f"Triggering pipeline for ref '{ref}' for project id {proj_id}")
-        pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables)
+        pid = create_pipeline(project_url, pipeline_token, ref, verifyssl, variables, verbose)
         try:
             proj = get_project(base_url, args.api_token, proj_id, verifyssl)
             print(f"See pipeline at {proj.web_url}/pipelines/{pid}")
@@ -353,12 +369,12 @@ def trigger(args: List[str]) -> int:
 
     print()
     if args.output:
-        jobs = get_pipeline_jobs(project_url, api_token, pid, verifyssl)
+        jobs = get_pipeline_jobs(project_url, api_token, pid, verifyssl, verbose)
         print(f'Pipeline {pid} job output:')
         for job in jobs:
             name = job['name']
             print(f'Job: {name}')
-            print(get_job_trace(project_url, api_token, job['id'], verifyssl))
+            print(get_job_trace(project_url, api_token, job['id'], verifyssl, verbose))
             print()
 
     if status == STATUS_SUCCESS:
