@@ -525,6 +525,31 @@ class TriggerTest(unittest.TestCase):
 
         self.assertEqual(expected_output, temp_stdout.getvalue().strip())
 
+    @mock.patch('gitlab.Gitlab')
+    def test_trigger_verbose(self, mock_get_gitlab):
+        """
+        """
+        project_id = 123
+        cmd_args = TriggerTest.COMMON_ARGS + f" --verbose {project_id}"
+
+        temp_stdout = self.run_trigger(
+            cmd_args,
+            mock_get_gitlab,
+            some_auto_pipeline_behavior(trigger.STATUS_SUCCESS),
+        )
+
+        expected_output = cleandoc("""
+            Triggering pipeline for ref 'master' for project id 123
+            Response create_pipeline: {"id": "1"}
+            Pipeline created (id: 1)
+            See pipeline at https://example.com/project1/pipelines/1
+            Waiting for pipeline 1 to finish ...
+            ..
+            Pipeline succeeded
+        """)
+
+        self.assertEqual(expected_output, temp_stdout.getvalue().strip())
+
 
 def mock_get_last_pipeline(project_id: int, response: dict, status_code: int = 200):
     def req_mock(gitlab, mock_request):
