@@ -218,7 +218,7 @@ def isint(x):
 def handle_manual_pipeline(args, pipeline, proj, status):
     defined_jobs = [item for item in args.jobs.split(',')] if args.jobs else []
     manual_jobs = []
-    for job in pipeline.jobs.list():
+    for job in pipeline.jobs.list(per_page=100):
         if job.status == STATUS_MANUAL:
             # pick the first manual job and exit the loop
             if len(defined_jobs) == 0:
